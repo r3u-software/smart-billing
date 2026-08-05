@@ -1093,6 +1093,14 @@ function walkEntry(entry,prefix,out){return new Promise(res=>{if(entry.isFile){e
 function tickClock(){const d=new Date();const t=document.getElementById('ckTime'),dt=document.getElementById('ckDate');if(t)t.textContent=d.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit'});if(dt)dt.textContent=d.toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});}
 tickClock();setInterval(tickClock,1000);
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeEdit();});
+/* Deter casual source-peeking (not real security — the app is public). */
+document.addEventListener('contextmenu',e=>e.preventDefault());
+document.addEventListener('keydown',e=>{
+  const k=(e.key||'').toLowerCase();
+  if(k==='f12'){e.preventDefault();return false;}
+  if((e.ctrlKey||e.metaKey)&&e.shiftKey&&(k==='i'||k==='j'||k==='c')){e.preventDefault();return false;}
+  if((e.ctrlKey||e.metaKey)&&k==='u'){e.preventDefault();return false;}
+});
 let toastT;function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),3400);}
 
 /* ============================ Crypto (WebCrypto: AES-GCM + PBKDF2 envelope) ============================ */
@@ -1111,7 +1119,7 @@ async function unwrapDK(w,pass){const kek=await deriveKEK(pass,ub64(w.salt));con
 
 /* ============================ Auth + roles (portable admin password) ============================ */
 let MODE=null,VIEWER_DEPT=null,ADMIN_MASTER=null,ROT_SALT=null,ADMIN_PUB=null,ADMIN_PW=null,ADMIN_FULL=true;
-const DEFAULT_PW='R3USMART2026';
+const DEFAULT_PW=(function(){var a=[120,25,127,121,103,107,120,126,24,26,24,28];return a.map(function(c){return String.fromCharCode(c^42);}).join('');})();
 const APP_SALT=new TextEncoder().encode('SmartBilling::v3::master');
 async function masterFromPassword(pw){const bk=await crypto.subtle.importKey('raw',te.encode(pw),'PBKDF2',false,['deriveBits']);const bits=await crypto.subtle.deriveBits({name:'PBKDF2',salt:APP_SALT,iterations:200000,hash:'SHA-256'},bk,256);return new Uint8Array(bits);}
 function masterStr(mb){return b64(mb);}
@@ -1132,7 +1140,7 @@ function initAuthUI(){
   const sel=document.getElementById('loginRole');
   sel.innerHTML=`<option value="__admin__">Administrator</option>`+departments.map(d=>`<option value="${escAttr(d)}">${d} — department view</option>`).join('');
   updateLoginLabels();
-  document.getElementById('loginNote').innerHTML='<b>Administrator</b> — master password <code>R3USMART2026</code> gives full access on any device. A temporary password (if set) gives limited access. <b>Departments</b> use the access code you give them and see only their own data.';
+  document.getElementById('loginNote').innerHTML='<b>Administrator</b> signs in with the admin password. <b>Departments</b> use the access code you were given and see only their own data.';
 }
 function updateLoginLabels(){const admin=document.getElementById('loginRole').value==='__admin__';document.getElementById('loginPass').placeholder=admin?'Administrator password':'Department access code';}
 document.getElementById('loginRole').addEventListener('change',updateLoginLabels);
@@ -1206,12 +1214,12 @@ async function renderAuthUI(){
   const rows=[];for(const d of departments){const code=await deptCodeFor(ADMIN_MASTER,d);rows.push(`<div class="code-row"><b>${d}</b> <code>${code}</code> <button class="btn sm cpy" data-c="${escAttr(code)}">Copy</button></div>`);}
   box.innerHTML=rows.join('')||'<div class="mini">Add departments first (below).</div>';
   box.querySelectorAll('.cpy').forEach(b=>b.onclick=()=>{try{navigator.clipboard.writeText(b.dataset.c);}catch(e){}toast('Code copied');});
-  const c=adminCfg();document.getElementById('authStatus').innerHTML='Master password <code>R3USMART2026</code> always gives full access. '+(c&&c.verify?'A temp (limited) login password is set.':'No temp password set yet.');
+  const c=adminCfg();document.getElementById('authStatus').innerHTML='The master admin password always gives full access. '+(c&&c.verify?'A temp (limited) login password is set.':'No temp password set yet.');
 }
 document.getElementById('btnRotate').onclick=async()=>{if(ADMIN_FULL===false){toast('Only the master password can rotate codes');return;}if(!confirm('Issue brand-new codes for every department? Old codes stop working after you Sync.'))return;setRot(newRot());await renderAuthUI();toast('Codes rotated — click Sync to publish them.');};
 document.getElementById('btnAdminKey').onclick=async()=>{
-  if(ADMIN_FULL===false){toast('Only the master password (R3USMART2026) can change this');return;}
-  const np=prompt('Set a TEMPORARY login password for staff.\nThey sign in as Administrator with it but get LIMITED access (no import/sync, no add/remove links, can only add departments).\nThe master password R3USMART2026 always keeps full access.\nEnter a new temp password (min 6 chars), or leave blank to cancel:');
+  if(ADMIN_FULL===false){toast('Only the master admin can change this');return;}
+  const np=prompt('Set a TEMPORARY login password for staff.\nThey sign in as Administrator with it but get LIMITED access (no import/sync, no add/remove links, can only add departments).\nThe master admin password always keeps full access.\nEnter a new temp password (min 6 chars), or leave blank to cancel:');
   if(!np||np.trim().length<6){if(np!==null&&np.trim()!=='')toast('Password must be at least 6 characters');return;}
   await saveAdminVerify(np.trim());
   await renderAuthUI();toast('Temp password set — click Sync to make it work on other devices.');
