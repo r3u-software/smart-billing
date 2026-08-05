@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="ocean" data-mode="dark">
+<html lang="en" data-theme="ocean" data-mode="light">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -230,7 +230,7 @@ body.collapsed #userMenu .userchip{justify-content:center}
     <div class="topbar">
       <button id="collapseBtn" title="Collapse / expand sidebar">☰</button>
       <div><h1 id="viewTitle">Dashboard</h1><div class="sub" id="viewSub">Overview of all Smart billing data</div></div>
-      <div class="search"><span>🔍</span><input id="globalSearch" name="sbms_q_9137" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore data-form-type="other" placeholder="Search phone, invoice #, user, month, amount…" /></div>
+      <div class="search"><span>🔍</span><input id="globalSearch" name="sbms_q_9137" type="text" readonly onfocus="this.removeAttribute('readonly')" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore data-form-type="other" placeholder="Search phone, invoice #, user, month, amount…" /></div>
     </div>
 
     <div class="content">
@@ -274,17 +274,14 @@ body.collapsed #userMenu .userchip{justify-content:center}
       <section class="view" id="v-preview">
         <div class="previewgrid">
           <div class="panel" style="margin-top:0">
-            <h3>◈ Invoice Preview</h3>
+            <h3>◈ Extracted Data</h3>
             <div class="hint" id="previewName">Select an invoice from the list →</div>
-            <div class="pdfview" id="pdfView"><div class="msg">Select an invoice to preview its PDF.</div></div>
-            <div class="row" style="margin-top:10px"><button class="btn sm" id="btnOpenPdf">↗ Open in new tab</button></div>
+            <div class="kv" id="previewKV" style="max-height:74vh;overflow:auto"><div class="kk">—</div><div class="vv">—</div></div>
           </div>
           <div class="panel" style="margin-top:0">
-            <h3>Extracted Data</h3><div class="hint">Parsed fields for the selected invoice</div>
-            <div class="kv" id="previewKV"><div class="kk">—</div><div class="vv">—</div></div>
-            <h3 style="margin-top:18px">All invoices</h3>
-            <input class="inp" id="previewSearch" placeholder="Search list…" style="width:100%;margin:8px 0"/>
-            <div class="list-invoices" id="previewList"></div>
+            <h3>All invoices</h3><div class="hint">Click any invoice to see its parsed fields on the left.</div>
+            <input class="inp" id="previewSearch" placeholder="Search list…" style="width:100%;margin:4px 0 8px"/>
+            <div class="list-invoices" id="previewList" style="max-height:70vh"></div>
           </div>
         </div>
       </section>
@@ -362,17 +359,19 @@ body.collapsed #userMenu .userchip{justify-content:center}
           <div class="swatches" id="swatches"></div>
         </div>
 
-        <div class="panel adminOnly">
-          <h3>🔐 Access codes</h3>
-          <div class="hint">Each department's code is generated <b>automatically from your Administrator password</b> — you don't set them, and they're the same on any device you sign in from. Give each team its code; members see <b>only their own</b> data. <b>Rotate</b> issues fresh codes; <b>Change admin password</b> updates the master. After either, click <b>Sync</b> to publish.</div>
-          <div id="codesBox"></div>
-          <div class="row" style="margin-top:12px"><button class="btn sm" id="btnRotate">🔄 Rotate all codes</button><button class="btn sm" id="btnAdminKey">🔑 Change admin password</button><span class="mini" id="authStatus"></span></div>
-        </div>
-
-        <div class="panel adminOnly">
-          <h3>🏢 Departments</h3><div class="hint">Add or remove department types. Used across Reports, Data Grid, Phone Numbers &amp; Billing Preview.</div>
-          <div id="deptPills" style="margin-bottom:10px"></div>
-          <div class="row"><input class="inp" id="newDept" placeholder="New department name" style="min-width:200px"><button class="btn sm primary" id="btnAddDept">＋ Add Department</button></div>
+        <div class="grid2 adminOnly">
+          <div class="panel" style="margin-top:16px">
+            <h3>🔐 Access codes</h3>
+            <div class="hint">Each department's code is generated <b>automatically from your Administrator password</b> — you don't set them, and they're the same on any device. Give each team its code; members see <b>only their own</b> data. <b>Rotate</b> = fresh codes; <b>Change admin password</b> = new master. After either, click <b>Sync</b>.</div>
+            <div id="codesBox"></div>
+            <div class="row" style="margin-top:12px"><button class="btn sm" id="btnRotate">🔄 Rotate</button><button class="btn sm" id="btnAdminKey">🔑 Change password</button></div>
+            <div class="mini" id="authStatus" style="margin-top:8px"></div>
+          </div>
+          <div class="panel" style="margin-top:16px">
+            <h3>🏢 Departments</h3><div class="hint">Add or remove department types. Used across Reports, Data Grid, Phone Numbers &amp; Billing Preview.</div>
+            <div id="deptPills" style="margin-bottom:10px"></div>
+            <div class="row"><input class="inp" id="newDept" placeholder="New department name" style="min-width:160px"><button class="btn sm primary" id="btnAddDept">＋ Add Department</button></div>
+          </div>
         </div>
 
         <div class="panel adminOnly">
@@ -816,7 +815,7 @@ document.getElementById('editSave').onclick=async()=>{
   await dbPut(r);
   const uName=document.getElementById('ef_userName').value.trim();const uId=document.getElementById('ef_userId').value.trim();const uDept=document.getElementById('ef_department').value;
   if(r.mobile)setUser(r.mobile,{userName:uName,userId:uId,department:uDept});
-  closeEdit();await refreshAll();toast('Saved');
+  closeEdit();await refreshAll();autoSyncSoon();toast('Saved');
 };
 
 /* ============================ Preview (canvas render) ============================ */
@@ -843,19 +842,8 @@ async function openPreviewById(id,keepView){
   ];
   document.getElementById('previewKV').innerHTML=kv.map(k=>`<div class="kk">${k[0]}</div><div class="vv">${k[1]==null||k[1]===''?'—':k[1]}</div>`).join('');
   renderPreviewList();
-  const view=document.getElementById('pdfView');const fh=fileHandles[r.invoicePath];
-  if(!fh){view.innerHTML='<div class="msg">PDF not loaded this session.<br>Re-import the folder (Import PDFs) to view the file inline, or click <b>Open in new tab</b>.</div>';return;}
-  view.innerHTML='<div class="msg">Rendering…</div>';
-  try{
-    await ensurePdfjs();const buf=await fh.arrayBuffer();const pdf=await window.pdfjsLib.getDocument({data:buf}).promise;
-    view.innerHTML='';const n=Math.min(pdf.numPages,8);
-    for(let p=1;p<=n;p++){const page=await pdf.getPage(p);const vp=page.getViewport({scale:1.4});
-      const cv=document.createElement('canvas');cv.width=vp.width;cv.height=vp.height;view.appendChild(cv);
-      await page.render({canvasContext:cv.getContext('2d'),viewport:vp}).promise;}
-  }catch(e){view.innerHTML='<div class="msg">Could not render this PDF ('+(e.message||e)+').<br>Try <b>Open in new tab</b>.</div>';}
 }
 document.getElementById('previewSearch').addEventListener('input',renderPreviewList);
-document.getElementById('btnOpenPdf').onclick=()=>{const r=DATA.find(x=>x.id===previewSel);const fh=r&&fileHandles[r.invoicePath];if(fh)window.open(URL.createObjectURL(fh));else toast('Re-import the folder to open the PDF');};
 
 /* ============================ Phones (master/detail) ============================ */
 function phoneAgg(){const map={};DATA.forEach(r=>{if(!r.mobile)return;const m=map[r.mobile]||(map[r.mobile]={n:0,cur:0,due:0,bills:[]});
@@ -971,7 +959,7 @@ function updateBackupInfo(){document.getElementById('backupInfo').textContent=`$
 /* ============================ Settings: themes/depts/users ============================ */
 const THEMES=[['ocean','Ocean'],['royal','Royal'],['emerald','Emerald'],['forest','Forest'],['cyber','Cyber'],['purple','Purple'],['midnight','Midnight'],['arctic','Arctic'],['crimson','Crimson'],['ruby','Ruby'],['sunset','Sunset'],['orange','Orange'],['amber','Amber'],['gold','Gold'],['rose','Rose'],['sakura','Sakura'],['mint','Mint'],['teal','Teal'],['graphite','Graphite'],['pureblack','Pure Black']];
 function saveSettings(){localStorage.setItem('sbms_settings',JSON.stringify(settings));}
-function applySettings(){document.documentElement.dataset.theme=settings.theme||'ocean';document.documentElement.dataset.mode=settings.mode||'dark';
+function applySettings(){document.documentElement.dataset.theme=settings.theme||'ocean';document.documentElement.dataset.mode=settings.mode||'light';
   document.documentElement.style.setProperty('--grid-density',settings.density||'8px');
   document.getElementById('setCurrency').value=settings.currency||'₱';document.getElementById('setDensity').value=settings.density||'8px';
   [...document.querySelectorAll('#modeToggle button')].forEach(b=>b.classList.toggle('on',b.dataset.mode===(settings.mode||'dark')));
@@ -984,8 +972,8 @@ document.getElementById('setDensity').onchange=e=>{settings.density=e.target.val
 document.getElementById('setCurrency').oninput=e=>{settings.currency=e.target.value;saveSettings();renderDashboard();renderGrid();renderPhones();};
 
 function renderDeptUI(){document.getElementById('deptPills').innerHTML=departments.map(d=>`<span class="pill">${d}<button data-d="${escAttr(d)}">✕</button></span>`).join('')||'<span class="mini">No departments yet.</span>';
-  document.querySelectorAll('#deptPills .pill button').forEach(b=>b.onclick=()=>{departments=departments.filter(x=>x!==b.dataset.d);saveDepts();renderDeptUI();renderFilters();renderReportDeptOptions();renderUsers();renderAuthUI();initAuthUI();toast('Department removed');});}
-document.getElementById('btnAddDept').onclick=()=>{const v=document.getElementById('newDept').value.trim();if(!v)return;if(!departments.includes(v))departments.push(v);saveDepts();document.getElementById('newDept').value='';renderDeptUI();renderFilters();renderReportDeptOptions();renderUsers();renderAuthUI();initAuthUI();toast('Department added');};
+  document.querySelectorAll('#deptPills .pill button').forEach(b=>b.onclick=()=>{departments=departments.filter(x=>x!==b.dataset.d);saveDepts();renderDeptUI();renderFilters();renderReportDeptOptions();renderUsers();renderAuthUI();initAuthUI();autoSyncSoon();toast('Department removed');});}
+document.getElementById('btnAddDept').onclick=()=>{const v=document.getElementById('newDept').value.trim();if(!v)return;if(!departments.includes(v))departments.push(v);saveDepts();document.getElementById('newDept').value='';renderDeptUI();renderFilters();renderReportDeptOptions();renderUsers();renderAuthUI();initAuthUI();autoSyncSoon();toast('Department added');};
 
 function usersRows(){
   const q=(document.getElementById('userSearch').value||'').toLowerCase();
@@ -1002,9 +990,9 @@ function renderUsers(){
       <td><select class="inp uDept">${opts}</select></td>
       <td><button class="btn sm uDel" title="Remove link">✕</button></td></tr>`;}).join('')||'<tr><td colspan="5"><div class="empty">No phones yet. Import invoices or add a link.</div></td></tr>';
   document.querySelectorAll('#usersBody tr[data-p]').forEach(tr=>{const p=tr.dataset.p;
-    const save=()=>{setUser(p,{userName:tr.querySelector('.uName').value.trim(),userId:tr.querySelector('.uId').value.trim(),department:tr.querySelector('.uDept').value});reapplyUsersEverywhere();};
+    const save=()=>{setUser(p,{userName:tr.querySelector('.uName').value.trim(),userId:tr.querySelector('.uId').value.trim(),department:tr.querySelector('.uDept').value});reapplyUsersEverywhere();autoSyncSoon();};
     tr.querySelector('.uName').onchange=save;tr.querySelector('.uId').onchange=save;tr.querySelector('.uDept').onchange=save;
-    tr.querySelector('.uDel').onclick=()=>{delete userMap[p];saveUserMap();renderUsers();reapplyUsersEverywhere();toast('Link removed');};
+    tr.querySelector('.uDel').onclick=()=>{delete userMap[p];saveUserMap();renderUsers();reapplyUsersEverywhere();autoSyncSoon();toast('Link removed');};
   });
 }
 document.getElementById('userSearch').addEventListener('input',renderUsers);
@@ -1018,7 +1006,7 @@ document.getElementById('mapInput').onchange=async e=>{const f=e.target.files[0]
       const name=find(/user\s*name|^name$|^\s*name/i);const wwid=find(/wwid|user\s*id/i);const dept=find(/dept|department/i);
       if(!userMap[ph])userMap[ph]={userName:'',userId:'',department:''};
       if(name)userMap[ph].userName=name;if(wwid)userMap[ph].userId=String(wwid).toLowerCase();if(dept&&departments.includes(dept))userMap[ph].department=dept;added++;});});
-  saveUserMap();renderUsers();reapplyUsersEverywhere();toast('Imported mapping for '+added+' rows');e.target.value='';};
+  saveUserMap();renderUsers();reapplyUsersEverywhere();autoSyncSoon();toast('Imported mapping for '+added+' rows — auto-syncing to GitHub…');e.target.value='';};
 
 /* ============================ Navigation ============================ */
 const VIEW_META={dashboard:['Dashboard','Overview of all Smart billing data'],grid:['Data Grid','Every invoice — click a row to edit'],preview:['Billing Preview','Inspect a single invoice'],reports:['Reports','Summaries by month, quarter, year, department'],analytics:['Analytics','Trends and top lists'],phones:['Phone Numbers','Per-line totals + full history'],charts:['Charts','Visual breakdowns'],settings:['Settings & Appearance','Themes, departments, user links'],backup:['Data, Import & Sync','Import PDFs, back up, and publish to GitHub']};
@@ -1110,6 +1098,7 @@ document.getElementById('loginBtn').onclick=async()=>{
       }
       if(lv===null)await saveAdminVerify(pass);
       ADMIN_MASTER=mb;ADMIN_PW=pass;ADMIN_PUB=pub;let rs=(idx&&idx.rotSalt)||rotLocal();if(!rs)rs=newRot();setRot(rs);
+      if(idx&&idx.departments&&idx.departments.length){departments=idx.departments.slice();saveDepts();initAuthUI();}
       await enterAdmin();
     } else {
       const recs=await loadPublished(role,pass);
@@ -1125,10 +1114,11 @@ async function enterAdmin(){MODE='admin';document.body.classList.remove('viewer'
   sessionStorage.setItem('sbms_session',JSON.stringify({role:'admin',pw:ADMIN_PW||''}));
   const local=await dbGetAll();
   if(local.length){DATA=local;applyUsers(DATA);}
-  else if(ADMIN_PUB&&ADMIN_PUB.length){DATA=ADMIN_PUB;}
+  else if(ADMIN_PUB&&ADMIN_PUB.length){DATA=ADMIN_PUB;rebuildUserMapFromRecords(DATA);applyUsers(DATA);}
   else DATA=[];
   renderViews();await renderAuthUI();renderPubMonths();renderUsers();updateBackupInfo();ghFillForm();
-  document.getElementById('loginPass').value='';}
+  setView('dashboard');document.getElementById('loginPass').value='';}
+function rebuildUserMapFromRecords(recs){let changed=false;recs.forEach(r=>{if(r.mobile&&(r.userName||r.userId||r.department)){const cur=userMap[r.mobile]||{};if(r.userName&&cur.userName!==r.userName){cur.userName=r.userName;changed=true;}if(r.userId&&cur.userId!==r.userId){cur.userId=r.userId;changed=true;}if(r.department&&cur.department!==r.department){cur.department=r.department;changed=true;}userMap[r.mobile]=cur;}});if(changed)saveUserMap();}
 function enterViewer(dept,recs,pass){MODE='viewer';VIEWER_DEPT=dept;document.body.classList.add('viewer');document.getElementById('loginOverlay').classList.remove('show');
   setUserChip(dept,(dept[0]||'U').toUpperCase());
   sessionStorage.setItem('sbms_session',JSON.stringify({role:dept,pass}));
@@ -1228,6 +1218,8 @@ async function syncNow(){
   toast(failed?`Sync: ${done} ok, ${failed} failed`:`Synced ${done} files to GitHub`);
 }
 document.getElementById('btnGhSync').onclick=syncNow;
+let autoSyncTimer=null;
+function autoSyncSoon(){const g=ghCfg();if(MODE!=='admin'||!g.token||!g.owner||!g.repo)return;clearTimeout(autoSyncTimer);autoSyncTimer=setTimeout(()=>{toast('Auto-syncing changes to GitHub…');syncNow();},2500);}
 
 /* ============================ Boot ============================ */
 async function refreshViewsOnly(){renderViews();}
@@ -1241,7 +1233,9 @@ async function refreshViewsOnly(){renderViews();}
   if(sess&&sess.role==='admin'&&sess.pw){
     try{const mb=await masterFromPassword(sess.pw);const idx=await fetchIndex();let pub=null;
       if(idx&&idx.months&&idx.months.length){try{pub=await loadPublishedAdmin(mb,idx);}catch(e){pub=null;}}
-      ADMIN_MASTER=mb;ADMIN_PW=sess.pw;ADMIN_PUB=pub;let rs=(idx&&idx.rotSalt)||rotLocal();if(!rs)rs=newRot();setRot(rs);await enterAdmin();
+      ADMIN_MASTER=mb;ADMIN_PW=sess.pw;ADMIN_PUB=pub;let rs=(idx&&idx.rotSalt)||rotLocal();if(!rs)rs=newRot();setRot(rs);
+      if(idx&&idx.departments&&idx.departments.length){departments=idx.departments.slice();saveDepts();initAuthUI();}
+      await enterAdmin();
     }catch(e){showLogin();}
   }
   else if(sess&&sess.role&&sess.role!=='admin'&&sess.pass){try{const recs=await loadPublished(sess.role,sess.pass);if(recs.length){enterViewer(sess.role,recs,sess.pass);}else showLogin();}catch(e){showLogin();}}
