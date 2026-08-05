@@ -230,7 +230,7 @@ body.collapsed #userMenu .userchip{justify-content:center}
     <div class="topbar">
       <button id="collapseBtn" title="Collapse / expand sidebar">☰</button>
       <div><h1 id="viewTitle">Dashboard</h1><div class="sub" id="viewSub">Overview of all Smart billing data</div></div>
-      <div class="search"><span>🔍</span><input id="globalSearch" placeholder="Search phone, invoice #, user, month, amount…" /></div>
+      <div class="search"><span>🔍</span><input id="globalSearch" name="sbms_q_9137" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore data-form-type="other" placeholder="Search phone, invoice #, user, month, amount…" /></div>
     </div>
 
     <div class="content">
@@ -1235,6 +1235,8 @@ async function refreshViewsOnly(){renderViews();}
   await openDB();document.getElementById('dbInfo').textContent='IndexedDB ready';
   try{await loadLib('chart');}catch(e){}
   initAuthUI();
+  // Defend against browser auto-filling the search box (which would filter the grid to 0 rows)
+  [300,800,1500].forEach(t=>setTimeout(()=>{const g=document.getElementById('globalSearch');if(g&&g.value){g.value='';if(currentView==='grid')renderGrid();}},t));
   const sess=JSON.parse(sessionStorage.getItem('sbms_session')||'null');
   if(sess&&sess.role==='admin'&&sess.pw){
     try{const mb=await masterFromPassword(sess.pw);const idx=await fetchIndex();let pub=null;
