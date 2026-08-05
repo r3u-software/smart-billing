@@ -1064,6 +1064,7 @@ async function unwrapDK(w,pass){const kek=await deriveKEK(pass,ub64(w.salt));con
 
 /* ============================ Auth + roles (auto-generated codes) ============================ */
 let MODE=null,VIEWER_DEPT=null,ADMIN_PASS=null;
+function adminAllowed(){const h=location.hostname;return location.protocol==='file:'||h==='localhost'||h==='127.0.0.1'||h==='';}
 function genCode(n){n=n||10;const a='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';let s='';const b=crypto.getRandomValues(new Uint8Array(n));for(let i=0;i<n;i++)s+=a[b[i]%a.length];return s;}
 function master(){return localStorage.getItem('sbms_master');}
 function ensureMaster(){let m=localStorage.getItem('sbms_master');if(!m){m=genCode(28);localStorage.setItem('sbms_master',m);}return m;}
@@ -1075,9 +1076,12 @@ function deptCode(d){const c=codes();return (c.cur&&c.cur[d])||'';}
 
 function initAuthUI(){
   const sel=document.getElementById('loginRole');
-  sel.innerHTML=`<option value="__admin__">Administrator (this device)</option>`+departments.map(d=>`<option value="${escAttr(d)}">${d} — department view</option>`).join('');
+  const adminOpt=adminAllowed()?`<option value="__admin__">Administrator (full access)</option>`:'';
+  sel.innerHTML=adminOpt+departments.map(d=>`<option value="${escAttr(d)}">${d} — department view</option>`).join('');
   toggleLoginPass();
-  document.getElementById('loginNote').innerHTML='Department members enter the access code given by the administrator and see only their own data. The administrator signs in on their own device — no password to remember.';
+  document.getElementById('loginNote').innerHTML=adminAllowed()
+    ? 'Administrator runs on this device only. Department members enter the code you give them and see only their own data.'
+    : 'Enter the access code from your administrator — you will see only your department’s data.';
 }
 function toggleLoginPass(){const admin=document.getElementById('loginRole').value==='__admin__';document.getElementById('loginPass').style.display=admin?'none':'';document.querySelector('.login-card label:nth-of-type(2)').style.display=admin?'none':'';}
 document.getElementById('loginRole').addEventListener('change',toggleLoginPass);
@@ -1086,7 +1090,7 @@ function loginErr(m){document.getElementById('loginErr').textContent=m||'';}
 document.getElementById('loginPass').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('loginBtn').click();});
 document.getElementById('loginBtn').onclick=async()=>{
   const role=document.getElementById('loginRole').value;const pass=document.getElementById('loginPass').value;loginErr('');
-  if(role==='__admin__'){ensureMaster();ADMIN_PASS=master();await enterAdmin();}
+  if(role==='__admin__'){if(!adminAllowed()){loginErr('Administrator is only available on the local app (localhost / the .bat).');return;}ensureMaster();ADMIN_PASS=master();await enterAdmin();}
   else{
     document.getElementById('loginBtn').textContent='Loading…';
     try{const recs=await loadPublished(role,pass.trim());if(!recs.length){loginErr('No published data for '+role+' yet, or wrong code.');}
@@ -1201,7 +1205,7 @@ async function refreshViewsOnly(){renderViews();}
   try{await loadLib('chart');}catch(e){}
   initAuthUI();
   const sess=JSON.parse(sessionStorage.getItem('sbms_session')||'null');
-  if(master()){await enterAdmin();}  // admin device — auto sign-in
+  if(sess&&sess.role==='admin'&&adminAllowed()){await enterAdmin();}  // resume admin within this browser session
   else if(sess&&sess.role&&sess.role!=='admin'&&sess.pass){try{const recs=await loadPublished(sess.role,sess.pass);if(recs.length){enterViewer(sess.role,recs,sess.pass);}else showLogin();}catch(e){showLogin();}}
   else showLogin();
 })();
