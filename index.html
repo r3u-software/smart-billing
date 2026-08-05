@@ -108,9 +108,18 @@ thead th.drag{outline:2px dashed var(--accent);outline-offset:-2px}
 thead th.num{text-align:right}
 tfoot td{padding-top:18px!important;padding-bottom:18px!important;border-top:2px solid var(--border)}
 .clock{margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;line-height:1.2;user-select:none;white-space:nowrap}
-.clock .ck-time{font-weight:800;font-size:22px;color:var(--text);letter-spacing:.5px}
+.clock .ck-time{font-weight:400;font-size:16.5px;color:var(--text);letter-spacing:.5px}
 .clock .ck-date{font-size:13px;color:var(--muted);font-weight:600}
 body.restricted .fullOnly{display:none!important}
+.load-overlay{position:fixed;inset:0;z-index:9999;display:none;align-items:center;justify-content:center;background:linear-gradient(135deg,#eef2ff,#e0e7ff)}
+.load-overlay.show{display:flex}
+.load-card{display:flex;flex-direction:column;align-items:center;gap:16px;padding:34px 40px}
+.load-logo{width:58px;height:58px;border-radius:16px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:28px;box-shadow:0 10px 30px rgba(99,102,241,.35)}
+.load-spin{width:34px;height:34px;border:4px solid rgba(99,102,241,.25);border-top-color:#6366f1;border-radius:50%;animation:loadspin .8s linear infinite}
+@keyframes loadspin{to{transform:rotate(360deg)}}
+.load-msg{font-size:14px;font-weight:600;color:#334155}
+.load-track{width:240px;height:8px;background:rgba(99,102,241,.15);border-radius:999px;overflow:hidden}
+.load-bar{height:100%;width:0;background:linear-gradient(90deg,#6366f1,#8b5cf6);border-radius:999px;transition:width .2s ease}
 tbody td{padding:calc(var(--grid-density)) 12px;border-bottom:1px solid var(--border)}
 tbody tr:nth-child(even){background:var(--row-alt)}tbody tr:hover{background:var(--hover)}
 tbody tr.clickable{cursor:pointer}tbody tr.sel{background:color-mix(in srgb,var(--accent) 20%,transparent)}
@@ -202,6 +211,14 @@ body.collapsed #userMenu .userchip{justify-content:center}
 </style>
 </head>
 <body>
+<div class="load-overlay show" id="loadOverlay">
+  <div class="load-card">
+    <div class="load-logo">S</div>
+    <div class="load-spin"></div>
+    <div class="load-msg" id="loadMsg">Starting…</div>
+    <div class="load-track"><div class="load-bar" id="loadBar"></div></div>
+  </div>
+</div>
 <div class="app">
   <aside class="sidebar">
     <div class="brand"><div class="logo">S</div><div><b>Smart Billing</b><br><small>Enterprise Edition</small></div></div>
@@ -462,6 +479,11 @@ body.collapsed #userMenu .userchip{justify-content:center}
             <button class="btn primary" id="btnGhSync">🔄 Sync now</button>
             <button class="btn sm" id="btnGhClear" title="Remove stored token">🗑 Clear token</button>
           </div>
+          <div class="row" style="margin-top:10px;align-items:center">
+            <button class="btn sm" id="btnTokenPublish" title="Encrypt the token with a Sync passphrase and store it in the repo, so other admin devices can use it">🔐 Make token portable</button>
+            <button class="btn sm" id="btnTokenUnlock" title="Fetch the encrypted token from the repo and unlock it with your Sync passphrase">🔓 Unlock token from repo</button>
+            <span class="mini" style="margin-left:6px">Portable = token stored in the repo <b>encrypted with a passphrase only you know</b> (never in the app's code). Type that passphrase on a new device to Sync.</span>
+          </div>
           <div class="mini" id="ghStatus" style="margin-top:12px;line-height:1.6"></div>
         </div>
       </section>
@@ -523,11 +545,17 @@ async function ensurePdfjs(){if(pdfjsReady)return;await loadLib('pdf');const wb=
   pdfjsReady=true;}
 
 /* ============================ IndexedDB ============================ */
-const DB_NAME='SmartBillingDB',STORE='invoices',DB_VER=1;let db;
+const DB_NAME='SmartBillingDB',STORE='invoices',PCACHE='pubcache',DB_VER=2;let db;
 function openDB(){return new Promise((res,rej)=>{const r=indexedDB.open(DB_NAME,DB_VER);
   r.onupgradeneeded=e=>{const d=e.target.result;if(!d.objectStoreNames.contains(STORE)){const os=d.createObjectStore(STORE,{keyPath:'id'});
-    os.createIndex('mobile','mobile',{unique:false});os.createIndex('dupKey','dupKey',{unique:false});}};
+    os.createIndex('mobile','mobile',{unique:false});os.createIndex('dupKey','dupKey',{unique:false});}
+    if(!d.objectStoreNames.contains(PCACHE))d.createObjectStore(PCACHE,{keyPath:'scope'});};
   r.onsuccess=e=>{db=e.target.result;res();};r.onerror=e=>rej(e);});}
+/* Decrypted-data cache (per scope: 'admin' or a department). Keyed by index.json's
+   'generated' stamp so a fresh Sync invalidates it; between syncs, logins are instant. */
+function cacheGet(scope){return new Promise(res=>{try{const q=db.transaction(PCACHE,'readonly').objectStore(PCACHE).get(scope);q.onsuccess=e=>res(e.target.result||null);q.onerror=()=>res(null);}catch(e){res(null);}});}
+function cachePut(scope,gen,records){return new Promise(res=>{try{const q=db.transaction(PCACHE,'readwrite').objectStore(PCACHE).put({scope,gen,records,ts:Date.now()});q.onsuccess=res;q.onerror=res;}catch(e){res();}});}
+function cacheClearAll(){return new Promise(res=>{try{const q=db.transaction(PCACHE,'readwrite').objectStore(PCACHE).clear();q.onsuccess=res;q.onerror=res;}catch(e){res();}});}
 function tx(m){return db.transaction(STORE,m).objectStore(STORE);}
 function dbGetAll(){return new Promise(res=>{const o=[];const rq=tx('readonly').openCursor();rq.onsuccess=e=>{const c=e.target.result;if(c){o.push(c.value);c.continue();}else res(o);};});}
 function dbPut(r){return new Promise((res,rej)=>{const q=tx('readwrite').put(r);q.onsuccess=res;q.onerror=rej;});}
@@ -1114,8 +1142,21 @@ async function deriveBits(pass,salt){const bk=await crypto.subtle.importKey('raw
 async function importAES(raw){return crypto.subtle.importKey('raw',raw,{name:'AES-GCM'},false,['encrypt','decrypt']);}
 async function aesEnc(key,str){const iv=crypto.getRandomValues(new Uint8Array(12));const ct=await crypto.subtle.encrypt({name:'AES-GCM',iv},key,te.encode(str));return{iv:b64(iv),ct:b64(ct)};}
 async function aesDec(key,ivB,ctB){const pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:ub64(ivB)},key,ub64(ctB));return td.decode(pt);}
-async function wrapDK(rawDK,pass){const salt=crypto.getRandomValues(new Uint8Array(16));const kek=await deriveKEK(pass,salt);const iv=crypto.getRandomValues(new Uint8Array(12));const ct=await crypto.subtle.encrypt({name:'AES-GCM',iv},kek,rawDK);return{salt:b64(salt),iv:b64(iv),ct:b64(ct)};}
-async function unwrapDK(w,pass){const kek=await deriveKEK(pass,ub64(w.salt));const raw=await crypto.subtle.decrypt({name:'AES-GCM',iv:ub64(w.iv)},kek,ub64(w.ct));return importAES(raw);}
+/* Fast per-slice key wrap. The admin master is already a strong 256-bit key, so we use it
+   DIRECTLY as an AES key (one import, then instant wraps) instead of re-running PBKDF2 per
+   slice. Department access codes are low-entropy, so they still get ONE PBKDF2 stretch per
+   login (cached), not one per slice — this is what removes the multi-second/​minute freeze. */
+async function sha256(bytes){return new Uint8Array(await crypto.subtle.digest('SHA-256',bytes));}
+let _mk=null,_mkStr=null;
+async function masterKeyFor(mb){const s=b64(mb);if(_mk&&_mkStr===s)return _mk;_mk=await crypto.subtle.importKey('raw',mb,{name:'AES-GCM'},false,['encrypt','decrypt']);_mkStr=s;return _mk;}
+async function saltForDept(dept,rot){return (await sha256(te.encode('dksalt|'+dept+'|'+(rot||'')))).slice(0,16);}
+const _deptKEK={};
+async function deptKEKFor(code,dept,rot){const ck=dept+'|'+code+'|'+(rot||'');if(_deptKEK[ck])return _deptKEK[ck];
+  const salt=await saltForDept(dept,rot);const bk=await crypto.subtle.importKey('raw',te.encode(code),'PBKDF2',false,['deriveKey']);
+  const k=await crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:150000,hash:'SHA-256'},bk,{name:'AES-GCM',length:256},false,['encrypt','decrypt']);
+  _deptKEK[ck]=k;return k;}
+async function wrapWith(key,rawDK){const iv=crypto.getRandomValues(new Uint8Array(12));const ct=await crypto.subtle.encrypt({name:'AES-GCM',iv},key,rawDK);return{iv:b64(iv),ct:b64(ct)};}
+async function unwrapWith(key,w){const raw=await crypto.subtle.decrypt({name:'AES-GCM',iv:ub64(w.iv)},key,ub64(w.ct));return importAES(raw);}
 
 /* ============================ Auth + roles (portable admin password) ============================ */
 let MODE=null,VIEWER_DEPT=null,ADMIN_MASTER=null,ROT_SALT=null,ADMIN_PUB=null,ADMIN_PW=null,ADMIN_FULL=true;
@@ -1134,7 +1175,19 @@ async function saveAdminVerify(pw){const salt=crypto.getRandomValues(new Uint8Ar
 async function checkAdminVerify(pw){const c=adminCfg();if(!c.verify)return null;return (await deriveBits(pw,ub64(c.salt)))===c.verify;}
 async function tempVerify(pw,idx){let c=adminCfg();if((!c||!c.verify)&&idx&&idx.tempHash)c=idx.tempHash;if(!c||!c.verify)return false;try{return (await deriveBits(pw,ub64(c.salt)))===c.verify;}catch(e){return false;}}
 async function fetchIndex(){try{const r=await fetch('./data/index.json',{cache:'no-store'});return r.ok?await r.json():null;}catch(e){return null;}}
-async function loadPublishedAdmin(mb,idx){let out=[];for(const mo of (idx.months||[])){const f=await fetch('./data/'+mo+'.json',{cache:'no-store'}).then(r=>r.ok?r.json():null).catch(()=>null);if(!f||!f.depts)continue;for(const d in f.depts){const e=f.depts[d];if(!e.keys||!e.keys.__admin__)continue;const dk=await unwrapDK(e.keys.__admin__,masterStr(mb));out=out.concat(JSON.parse(await aesDec(dk,e.iv,e.ct)));}}return out;}
+function showLoad(msg){const o=document.getElementById('loadOverlay');if(!o)return;document.getElementById('loadMsg').textContent=msg||'Loading…';document.getElementById('loadBar').style.width='0%';o.classList.add('show');}
+function setLoad(i,n,msg){const b=document.getElementById('loadBar');if(b&&n)b.style.width=Math.round(i/n*100)+'%';if(msg){const m=document.getElementById('loadMsg');if(m)m.textContent=msg;}}
+function hideLoad(){const o=document.getElementById('loadOverlay');if(o)o.classList.remove('show');}
+// Verify a department code by decrypting a single slice (keeps cache-fast logins secure)
+async function authDept(idx,dept,pass){try{const dkek=await deptKEKFor(pass,dept,idx.rotSalt||'');for(const mo of (idx.months||[])){const f=await fetch('./data/'+mo+'.json',{cache:'no-store'}).then(r=>r.ok?r.json():null).catch(()=>null);const e=f&&f.depts&&f.depts[dept];if(e&&e.keys&&e.keys[dept]){await unwrapWith(dkek,e.keys[dept]);return true;}}return true;}catch(err){return false;}}
+async function loadPublishedAdmin(mb,idx,onp){const masterKey=await masterKeyFor(mb);let out=[];const ms=idx.months||[];
+  for(let i=0;i<ms.length;i++){const mo=ms[i];if(onp)onp(i+1,ms.length);
+    const f=await fetch('./data/'+mo+'.json',{cache:'no-store'}).then(r=>r.ok?r.json():null).catch(()=>null);
+    if(f&&f.depts){for(const d in f.depts){const e=f.depts[d];if(!e.keys||!e.keys.__admin__)continue;
+      try{const dk=await unwrapWith(masterKey,e.keys.__admin__);out=out.concat(JSON.parse(await aesDec(dk,e.iv,e.ct)));}catch(err){}}}
+    await new Promise(r=>setTimeout(r,0));  // yield so the UI/clock stays alive
+  }
+  return out;}
 
 function initAuthUI(){
   const sel=document.getElementById('loginRole');
@@ -1158,17 +1211,33 @@ document.getElementById('loginBtn').onclick=async()=>{
       else if(await tempVerify(pass,idx)){full=false;ok=true;}
       if(!ok){loginErr('Wrong administrator password.');btn.textContent='Sign in';return;}
       const mb=await masterFromPassword(DEFAULT_PW);
-      let pub=null;
-      if(idx&&idx.months&&idx.months.length){try{pub=await loadPublishedAdmin(mb,idx);}catch(e){pub=null;}}
-      ADMIN_MASTER=mb;ADMIN_PW=pass;ADMIN_FULL=full;ADMIN_PUB=pub;let rs=(idx&&idx.rotSalt)||rotLocal();if(!rs)rs=newRot();setRot(rs);
+      ADMIN_MASTER=mb;ADMIN_PW=pass;ADMIN_FULL=full;let rs=(idx&&idx.rotSalt)||rotLocal();if(!rs)rs=newRot();setRot(rs);
       if(idx&&idx.departments&&idx.departments.length){departments=idx.departments.slice();saveDepts();initAuthUI();}
+      let pub=null;
+      const hasLocal=(await dbGetAll()).length>0;
+      if(!hasLocal && idx && idx.months && idx.months.length){
+        showLoad('Loading your data…');
+        const cached=await cacheGet('admin');
+        if(cached && cached.gen===idx.generated){pub=cached.records;}
+        else{try{pub=await loadPublishedAdmin(mb,idx,(i,n)=>setLoad(i,n,'Decrypting month '+i+' of '+n+'…'));if(pub&&pub.length)await cachePut('admin',idx.generated,pub);}catch(e){pub=null;}}
+      }
+      ADMIN_PUB=pub;
       await enterAdmin();
     } else {
-      const recs=await loadPublished(role,pass);
-      if(!recs.length)loginErr('No published data for '+role+' yet, or wrong code.');
-      else enterViewer(role,recs,pass);
+      const idx=await fetchIndex();
+      showLoad('Loading '+role+' data…');
+      let recs=null;const cached=idx?await cacheGet(role):null;
+      if(idx && cached && cached.gen===idx.generated){
+        if(!await authDept(idx,role,pass)){hideLoad();loginErr('Wrong access code for '+role+'.');btn.textContent='Sign in';return;}
+        recs=cached.records;
+      } else {
+        try{recs=await loadPublished(role,pass,(i,n)=>setLoad(i,n,'Decrypting month '+i+' of '+n+'…'),idx);if(idx&&recs&&recs.length)await cachePut(role,idx.generated,recs);}
+        catch(e){hideLoad();loginErr((e.message==='WRONG_CODE')?('Wrong access code for '+role+'.'):('Could not sign in — '+(e.message||e)));btn.textContent='Sign in';return;}
+      }
+      if(!recs||!recs.length){hideLoad();loginErr('No published data for '+role+' yet (or wrong code).');btn.textContent='Sign in';return;}
+      enterViewer(role,recs,pass);
     }
-  }catch(e){loginErr('Could not sign in — '+(e.message||e));}
+  }catch(e){hideLoad();loginErr('Could not sign in — '+(e.message||e));}
   btn.textContent='Sign in';
 };
 function setUserChip(name,avatar){document.getElementById('uName').textContent=name;document.getElementById('uAva').textContent=avatar;document.getElementById('uWho').textContent=(MODE==='admin'?'Administrator':'Department: '+VIEWER_DEPT);}
@@ -1180,13 +1249,13 @@ async function enterAdmin(){MODE='admin';document.body.classList.remove('viewer'
   else if(ADMIN_PUB&&ADMIN_PUB.length){DATA=ADMIN_PUB;rebuildUserMapFromRecords(DATA);applyUsers(DATA);}
   else DATA=[];
   renderViews();await renderAuthUI();renderPubMonths();renderUsers();updateBackupInfo();ghFillForm();
-  setView('dashboard');document.getElementById('loginPass').value='';}
+  setView('dashboard');document.getElementById('loginPass').value='';hideLoad();}
 function rebuildUserMapFromRecords(recs){let changed=false;recs.forEach(r=>{if(r.mobile&&(r.userName||r.userId||r.department)){const cur=userMap[r.mobile]||{};if(r.userName&&cur.userName!==r.userName){cur.userName=r.userName;changed=true;}if(r.userId&&cur.userId!==r.userId){cur.userId=r.userId;changed=true;}if(r.department&&cur.department!==r.department){cur.department=r.department;changed=true;}userMap[r.mobile]=cur;}});if(changed)saveUserMap();}
 function enterViewer(dept,recs,pass){MODE='viewer';VIEWER_DEPT=dept;document.body.classList.add('viewer');document.getElementById('loginOverlay').classList.remove('show');
   setUserChip(dept,(dept[0]||'U').toUpperCase());
   sessionStorage.setItem('sbms_session',JSON.stringify({role:dept,pass}));
-  DATA=recs;renderViews();setView('dashboard');document.getElementById('loginPass').value='';}
-document.getElementById('logoutBtn').onclick=()=>{sessionStorage.removeItem('sbms_session');location.reload();};
+  DATA=recs;renderViews();setView('dashboard');document.getElementById('loginPass').value='';hideLoad();}
+document.getElementById('logoutBtn').onclick=async()=>{sessionStorage.removeItem('sbms_session');try{await cacheClearAll();}catch(e){}location.reload();};
 document.getElementById('umSettings').onclick=()=>{setView('settings');document.getElementById('userPop').classList.remove('show');};
 document.getElementById('userChip').onclick=e=>{e.stopPropagation();document.getElementById('userPop').classList.toggle('show');};
 document.addEventListener('click',()=>document.getElementById('userPop').classList.remove('show'));
@@ -1195,16 +1264,21 @@ if(localStorage.getItem('sbms_collapsed')==='1')document.body.classList.add('col
 document.getElementById('collapseBtn').onclick=()=>{document.body.classList.toggle('collapsed');localStorage.setItem('sbms_collapsed',document.body.classList.contains('collapsed')?'1':'0');};
 
 /* ============================ Viewer: load encrypted published data ============================ */
-async function loadPublished(dept,pass){
-  const idx=await fetch('./data/index.json',{cache:'no-store'}).then(r=>r.ok?r.json():null).catch(()=>null);
+async function loadPublished(dept,pass,onp,idxIn){
+  const idx=idxIn||await fetchIndex();
   if(!idx||!idx.months)throw new Error('no index');
-  let out=[];
-  for(const mo of idx.months){
+  const dkek=await deptKEKFor(pass,dept,idx.rotSalt||'');
+  let out=[],sawSlice=false;
+  const ms=idx.months;
+  for(let i=0;i<ms.length;i++){const mo=ms[i];if(onp)onp(i+1,ms.length);
     const file=await fetch('./data/'+mo+'.json',{cache:'no-store'}).then(r=>r.ok?r.json():null).catch(()=>null);
-    if(!file||!file.depts)continue;const entry=file.depts[dept];if(!entry||!entry.keys[dept])continue;
-    const dk=await unwrapDK(entry.keys[dept],pass); // throws on wrong password
-    out=out.concat(JSON.parse(await aesDec(dk,entry.iv,entry.ct)));
+    if(file&&file.depts){const entry=file.depts[dept];
+      if(entry&&entry.keys&&entry.keys[dept]){sawSlice=true;
+        let dk;try{dk=await unwrapWith(dkek,entry.keys[dept]);}catch(err){throw new Error('WRONG_CODE');} // AES auth fail = wrong code
+        out=out.concat(JSON.parse(await aesDec(dk,entry.iv,entry.ct)));}}
+    await new Promise(r=>setTimeout(r,0));
   }
+  out._sawSlice=sawSlice;
   return out;
 }
 
@@ -1229,7 +1303,7 @@ function renderPubMonths(){const s=document.getElementById('pubMonth');if(!s)ret
 function cleanRec(r){const o={};['userId','userName','department','mobile','invoiceNumber','accountNumber','customer','company','invoiceDate','billingPeriod','year','month','quarter','currentCharges','prevAmountDue','remainingBalance','totalAmountDue','planCharge','deviceCost','deviceTerm','discounts','vat','creditLimit','dueDate','invoiceFolder','invoiceFile','status'].forEach(k=>{if(r[k]!=null&&r[k]!=='')o[k]=r[k];});return o;}
 async function buildMonthFile(mo){
   if(!ADMIN_MASTER){toast('Sign in as Administrator first');return null;}
-  const mk=masterStr(ADMIN_MASTER);
+  const masterKey=await masterKeyFor(ADMIN_MASTER);
   applyUsers(DATA);
   const recs=DATA.filter(r=>(r.year+'-'+String(r.month).padStart(2,'0'))===mo);
   const groups={};recs.forEach(r=>{const d=r.department||'__unassigned__';(groups[d]=groups[d]||[]).push(cleanRec(r));});
@@ -1237,8 +1311,8 @@ async function buildMonthFile(mo){
   for(const d in groups){
     const rawDK=crypto.getRandomValues(new Uint8Array(32));const dk=await importAES(rawDK);
     const enc=await aesEnc(dk,JSON.stringify(groups[d]));
-    const keys={__admin__:await wrapDK(rawDK,mk)};
-    if(d!=='__unassigned__')keys[d]=await wrapDK(rawDK,await deptCodeFor(ADMIN_MASTER,d));
+    const keys={__admin__:await wrapWith(masterKey,rawDK)};
+    if(d!=='__unassigned__'){const code=await deptCodeFor(ADMIN_MASTER,d);const dkek=await deptKEKFor(code,d,ROT_SALT);keys[d]=await wrapWith(dkek,rawDK);}
     depts[d]={iv:enc.iv,ct:enc.ct,keys};
   }
   return {month:mo,generated:new Date().toISOString(),depts};
@@ -1260,6 +1334,40 @@ function ghReadForm(){const g={owner:ghv('ghOwner'),repo:ghv('ghRepo'),branch:gh
 function ghv(id){return (document.getElementById(id).value||'').trim();}
 document.getElementById('btnGhSave').onclick=()=>{saveGh(ghReadForm());toast('GitHub settings saved (this machine only)');document.getElementById('ghStatus').textContent='Saved.';};
 document.getElementById('btnGhClear').onclick=()=>{const g=ghCfg();g.token='';saveGh(g);document.getElementById('ghToken').value='';toast('Token cleared');};
+/* Portable token: encrypt the PAT under a user-chosen Sync passphrase (PBKDF2+AES-GCM) and
+   store it in the repo. The passphrase is NEVER stored anywhere — you type it per device. */
+async function encToken(token,pass){const salt=crypto.getRandomValues(new Uint8Array(16));const kek=await deriveKEK(pass,salt);const iv=crypto.getRandomValues(new Uint8Array(12));const ct=await crypto.subtle.encrypt({name:'AES-GCM',iv},kek,te.encode(token));return{salt:b64(salt),iv:b64(iv),ct:b64(new Uint8Array(ct))};}
+async function decToken(blob,pass){const kek=await deriveKEK(pass,ub64(blob.salt));const pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:ub64(blob.iv)},kek,ub64(blob.ct));return td.decode(pt);}
+document.getElementById('btnTokenPublish').onclick=async()=>{
+  const g=ghReadForm();const st=document.getElementById('ghStatus');
+  if(!g.owner||!g.repo||!g.token){toast('Enter owner, repo and the token first');return;}
+  const pass=prompt('Choose a SYNC PASSPHRASE.\nYou will type this on other admin devices to unlock the token.\nMinimum 8 characters. Keep it private — it is NOT stored in the app or the code.');
+  if(!pass||pass.trim().length<8){if(pass!==null&&pass.trim()!=='')toast('Passphrase must be at least 8 characters');return;}
+  if(prompt('Re-enter the Sync passphrase to confirm:')!==pass){toast('Passphrases did not match');return;}
+  st.textContent='Encrypting & publishing token…';
+  try{
+    const blob=await encToken(g.token.trim(),pass.trim());
+    const content=JSON.stringify({tokenEnc:blob,updated:new Date().toISOString()},null,2);
+    const path=g.path+'/sync.json';
+    const sha=await ghGetSha(g.owner,g.repo,path,g.branch,g.token);
+    await ghPut(g.owner,g.repo,path,content,'Update encrypted sync token',g.branch,g.token,sha);
+    saveGh(g);
+    st.innerHTML='<span class="ok">✓ Encrypted token published. On another admin device: click <b>Unlock token from repo</b> and enter this passphrase.</span>';
+    toast('Portable token published');
+  }catch(e){st.innerHTML='<span class="err">✗ '+e.message+'</span>';}
+};
+document.getElementById('btnTokenUnlock').onclick=async()=>{
+  const st=document.getElementById('ghStatus');const path=(ghv('ghPath')||'data');
+  st.textContent='Fetching encrypted token…';
+  let blob=null;
+  try{const r=await fetch('./'+path+'/sync.json',{cache:'no-store'});if(r.ok){const j=await r.json();blob=j.tokenEnc;}}catch(e){}
+  if(!blob){st.innerHTML='<span class="err">No published token found in the repo yet. Publish it first from the machine that has the token.</span>';return;}
+  const pass=prompt('Enter your Sync passphrase to unlock the GitHub token:');
+  if(!pass)return;
+  try{const tok=await decToken(blob,pass.trim());document.getElementById('ghToken').value=tok;saveGh(ghReadForm());
+    st.innerHTML='<span class="ok">✓ Token unlocked and saved on this device. You can Sync now.</span>';toast('Token unlocked');}
+  catch(e){st.innerHTML='<span class="err">✗ Wrong Sync passphrase (or corrupted token).</span>';}
+};
 document.getElementById('btnGhTest').onclick=async()=>{const g=ghReadForm();const st=document.getElementById('ghStatus');if(!g.owner||!g.repo||!g.token){st.textContent='Enter owner, repo and token first.';return;}
   st.textContent='Testing…';try{const res=await fetch(`https://api.github.com/repos/${g.owner}/${g.repo}`,{headers:ghHeaders(g.token)});
     if(res.ok){const j=await res.json();st.innerHTML=`<span class="ok">✓ Connected to ${j.full_name}${j.private?' (private)':''}. Default branch: ${j.default_branch}.</span>`;}
@@ -1295,14 +1403,27 @@ async function refreshViewsOnly(){renderViews();}
   const sess=JSON.parse(sessionStorage.getItem('sbms_session')||'null');
   if(sess&&sess.role==='admin'){
     try{const mb=await masterFromPassword(DEFAULT_PW);const idx=await fetchIndex();let pub=null;
-      if(idx&&idx.months&&idx.months.length){try{pub=await loadPublishedAdmin(mb,idx);}catch(e){pub=null;}}
-      ADMIN_MASTER=mb;ADMIN_PW=sess.pw||'';ADMIN_FULL=(sess.full!==false);ADMIN_PUB=pub;let rs=(idx&&idx.rotSalt)||rotLocal();if(!rs)rs=newRot();setRot(rs);
+      ADMIN_MASTER=mb;ADMIN_PW=sess.pw||'';ADMIN_FULL=(sess.full!==false);let rs=(idx&&idx.rotSalt)||rotLocal();if(!rs)rs=newRot();setRot(rs);
       if(idx&&idx.departments&&idx.departments.length){departments=idx.departments.slice();saveDepts();initAuthUI();}
+      const hasLocal=(await dbGetAll()).length>0;
+      if(!hasLocal && idx && idx.months && idx.months.length){
+        showLoad('Loading your data…');
+        const cached=await cacheGet('admin');
+        if(cached&&cached.gen===idx.generated){pub=cached.records;}
+        else{try{pub=await loadPublishedAdmin(mb,idx,(i,n)=>setLoad(i,n,'Decrypting month '+i+' of '+n+'…'));if(pub&&pub.length)await cachePut('admin',idx.generated,pub);}catch(e){pub=null;}}
+      }
+      ADMIN_PUB=pub;
       await enterAdmin();
-    }catch(e){showLogin();}
+    }catch(e){hideLoad();showLogin();}
   }
-  else if(sess&&sess.role&&sess.role!=='admin'&&sess.pass){try{const recs=await loadPublished(sess.role,sess.pass);if(recs.length){enterViewer(sess.role,recs,sess.pass);}else showLogin();}catch(e){showLogin();}}
-  else showLogin();
+  else if(sess&&sess.role&&sess.role!=='admin'&&sess.pass){
+    try{const idx=await fetchIndex();showLoad('Loading '+sess.role+' data…');let recs=null;const cached=idx?await cacheGet(sess.role):null;
+      if(idx&&cached&&cached.gen===idx.generated&&await authDept(idx,sess.role,sess.pass)){recs=cached.records;}
+      else{recs=await loadPublished(sess.role,sess.pass,(i,n)=>setLoad(i,n,'Decrypting month '+i+' of '+n+'…'),idx);if(idx&&recs&&recs.length)await cachePut(sess.role,idx.generated,recs);}
+      if(recs&&recs.length){enterViewer(sess.role,recs,sess.pass);}else{hideLoad();showLogin();}
+    }catch(e){hideLoad();showLogin();}
+  }
+  else {hideLoad();showLogin();}
 })();
 </script>
 </body>
