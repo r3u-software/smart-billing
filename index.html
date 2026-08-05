@@ -364,9 +364,9 @@ body.collapsed #userMenu .userchip{justify-content:center}
 
         <div class="panel adminOnly">
           <h3>🔐 Access codes</h3>
-          <div class="hint">Passwords are generated <b>automatically</b> — you don't set them. Give each department its code; members enter it to view <b>only their own</b> data. Codes live on this admin device only. They auto-rotate every 24h while you're signed in; you can also <b>Rotate</b> manually. After any change, click <b>Sync</b> so the new codes take effect.</div>
+          <div class="hint">Each department's code is generated <b>automatically from your Administrator password</b> — you don't set them, and they're the same on any device you sign in from. Give each team its code; members see <b>only their own</b> data. <b>Rotate</b> issues fresh codes; <b>Change admin password</b> updates the master. After either, click <b>Sync</b> to publish.</div>
           <div id="codesBox"></div>
-          <div class="row" style="margin-top:12px"><button class="btn sm" id="btnRotate">🔄 Rotate all codes</button><button class="btn sm" id="btnAdminKey">🔑 Admin key…</button><span class="mini" id="authStatus"></span></div>
+          <div class="row" style="margin-top:12px"><button class="btn sm" id="btnRotate">🔄 Rotate all codes</button><button class="btn sm" id="btnAdminKey">🔑 Change admin password</button><span class="mini" id="authStatus"></span></div>
         </div>
 
         <div class="panel adminOnly">
@@ -1062,50 +1062,64 @@ async function aesDec(key,ivB,ctB){const pt=await crypto.subtle.decrypt({name:'A
 async function wrapDK(rawDK,pass){const salt=crypto.getRandomValues(new Uint8Array(16));const kek=await deriveKEK(pass,salt);const iv=crypto.getRandomValues(new Uint8Array(12));const ct=await crypto.subtle.encrypt({name:'AES-GCM',iv},kek,rawDK);return{salt:b64(salt),iv:b64(iv),ct:b64(ct)};}
 async function unwrapDK(w,pass){const kek=await deriveKEK(pass,ub64(w.salt));const raw=await crypto.subtle.decrypt({name:'AES-GCM',iv:ub64(w.iv)},kek,ub64(w.ct));return importAES(raw);}
 
-/* ============================ Auth + roles (auto-generated codes) ============================ */
-let MODE=null,VIEWER_DEPT=null,ADMIN_PASS=null;
-function adminAllowed(){const h=location.hostname;return location.protocol==='file:'||h==='localhost'||h==='127.0.0.1'||h==='';}
-function genCode(n){n=n||10;const a='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';let s='';const b=crypto.getRandomValues(new Uint8Array(n));for(let i=0;i<n;i++)s+=a[b[i]%a.length];return s;}
-function master(){return localStorage.getItem('sbms_master');}
-function ensureMaster(){let m=localStorage.getItem('sbms_master');if(!m){m=genCode(28);localStorage.setItem('sbms_master',m);}return m;}
-function codes(){return JSON.parse(localStorage.getItem('sbms_codes')||'{}');}
-function saveCodes(c){localStorage.setItem('sbms_codes',JSON.stringify(c));}
-function ensureCodesForDepts(){const c=codes();c.cur=c.cur||{};let changed=false;departments.forEach(d=>{if(!c.cur[d]){c.cur[d]=genCode(10);changed=true;}});if(!c.ts||changed){c.ts=c.ts||Date.now();saveCodes(c);}return c;}
-function rotateCodes(){const c=codes();c.cur={};departments.forEach(d=>{c.cur[d]=genCode(10);});c.ts=Date.now();saveCodes(c);}
-function deptCode(d){const c=codes();return (c.cur&&c.cur[d])||'';}
+/* ============================ Auth + roles (portable admin password) ============================ */
+let MODE=null,VIEWER_DEPT=null,ADMIN_MASTER=null,ROT_SALT=null,ADMIN_PUB=null,ADMIN_PW=null;
+const APP_SALT=new TextEncoder().encode('SmartBilling::v3::master');
+async function masterFromPassword(pw){const bk=await crypto.subtle.importKey('raw',te.encode(pw),'PBKDF2',false,['deriveBits']);const bits=await crypto.subtle.deriveBits({name:'PBKDF2',salt:APP_SALT,iterations:200000,hash:'SHA-256'},bk,256);return new Uint8Array(bits);}
+function masterStr(mb){return b64(mb);}
+async function hmacBytes(keyBytes,msg){const k=await crypto.subtle.importKey('raw',keyBytes,{name:'HMAC',hash:'SHA-256'},false,['sign']);return new Uint8Array(await crypto.subtle.sign('HMAC',k,te.encode(msg)));}
+function readable(bytes,n){n=n||10;const a='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';let s='';for(let i=0;i<n;i++)s+=a[bytes[i]%a.length];return s;}
+async function deptCodeFor(mb,dept){return readable(await hmacBytes(mb,dept+'|'+(ROT_SALT||'')),10);}
+function rotLocal(){return localStorage.getItem('sbms_rot')||'';}
+function setRot(v){ROT_SALT=v;if(v)localStorage.setItem('sbms_rot',v);}
+function newRot(){return b64(crypto.getRandomValues(new Uint8Array(6)));}
+function adminCfg(){return JSON.parse(localStorage.getItem('sbms_admincfg')||'{}');}
+async function saveAdminVerify(pw){const salt=crypto.getRandomValues(new Uint8Array(16));localStorage.setItem('sbms_admincfg',JSON.stringify({salt:b64(salt),verify:await deriveBits(pw,salt)}));}
+async function checkAdminVerify(pw){const c=adminCfg();if(!c.verify)return null;return (await deriveBits(pw,ub64(c.salt)))===c.verify;}
+async function fetchIndex(){try{const r=await fetch('./data/index.json',{cache:'no-store'});return r.ok?await r.json():null;}catch(e){return null;}}
+async function loadPublishedAdmin(mb,idx){let out=[];for(const mo of (idx.months||[])){const f=await fetch('./data/'+mo+'.json',{cache:'no-store'}).then(r=>r.ok?r.json():null).catch(()=>null);if(!f||!f.depts)continue;for(const d in f.depts){const e=f.depts[d];if(!e.keys||!e.keys.__admin__)continue;const dk=await unwrapDK(e.keys.__admin__,masterStr(mb));out=out.concat(JSON.parse(await aesDec(dk,e.iv,e.ct)));}}return out;}
 
 function initAuthUI(){
   const sel=document.getElementById('loginRole');
-  const adminOpt=adminAllowed()?`<option value="__admin__">Administrator (full access)</option>`:'';
-  sel.innerHTML=adminOpt+departments.map(d=>`<option value="${escAttr(d)}">${d} — department view</option>`).join('');
-  toggleLoginPass();
-  document.getElementById('loginNote').innerHTML=adminAllowed()
-    ? 'Administrator runs on this device only. Department members enter the code you give them and see only their own data.'
-    : 'Enter the access code from your administrator — you will see only your department’s data.';
+  sel.innerHTML=`<option value="__admin__">Administrator (full access)</option>`+departments.map(d=>`<option value="${escAttr(d)}">${d} — department view</option>`).join('');
+  updateLoginLabels();
+  document.getElementById('loginNote').innerHTML='<b>Administrator</b> signs in with the master password (works on any device). <b>Departments</b> use the access code you give them and see only their own data.';
 }
-function toggleLoginPass(){const admin=document.getElementById('loginRole').value==='__admin__';document.getElementById('loginPass').style.display=admin?'none':'';document.querySelector('.login-card label:nth-of-type(2)').style.display=admin?'none':'';}
-document.getElementById('loginRole').addEventListener('change',toggleLoginPass);
+function updateLoginLabels(){const admin=document.getElementById('loginRole').value==='__admin__';document.getElementById('loginPass').placeholder=admin?'Administrator password':'Department access code';}
+document.getElementById('loginRole').addEventListener('change',updateLoginLabels);
 function showLogin(){document.getElementById('loginOverlay').classList.add('show');document.getElementById('loginPass').focus();}
 function loginErr(m){document.getElementById('loginErr').textContent=m||'';}
 document.getElementById('loginPass').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('loginBtn').click();});
 document.getElementById('loginBtn').onclick=async()=>{
-  const role=document.getElementById('loginRole').value;const pass=document.getElementById('loginPass').value;loginErr('');
-  if(role==='__admin__'){if(!adminAllowed()){loginErr('Administrator is only available on the local app (localhost / the .bat).');return;}ensureMaster();ADMIN_PASS=master();await enterAdmin();}
-  else{
-    document.getElementById('loginBtn').textContent='Loading…';
-    try{const recs=await loadPublished(role,pass.trim());if(!recs.length){loginErr('No published data for '+role+' yet, or wrong code.');}
-      else{enterViewer(role,recs,pass.trim());}}
-    catch(e){loginErr('Wrong access code, or no published data found.');}
-    document.getElementById('loginBtn').textContent='Sign in';
-  }
+  const role=document.getElementById('loginRole').value;const pass=document.getElementById('loginPass').value.trim();loginErr('');
+  const btn=document.getElementById('loginBtn');btn.textContent='Signing in…';
+  try{
+    if(role==='__admin__'){
+      if(pass.length<6){loginErr('Administrator password must be at least 6 characters.');btn.textContent='Sign in';return;}
+      const mb=await masterFromPassword(pass);const idx=await fetchIndex();let pub=null;const lv=await checkAdminVerify(pass);
+      if(idx&&idx.months&&idx.months.length){try{pub=await loadPublishedAdmin(mb,idx);}catch(e){loginErr('Wrong administrator password.');btn.textContent='Sign in';return;}}
+      else if(lv===false){loginErr('Wrong administrator password.');btn.textContent='Sign in';return;}
+      if(lv===null)await saveAdminVerify(pass);
+      ADMIN_MASTER=mb;ADMIN_PW=pass;ADMIN_PUB=pub;let rs=(idx&&idx.rotSalt)||rotLocal();if(!rs)rs=newRot();setRot(rs);
+      await enterAdmin();
+    } else {
+      const recs=await loadPublished(role,pass);
+      if(!recs.length)loginErr('No published data for '+role+' yet, or wrong code.');
+      else enterViewer(role,recs,pass);
+    }
+  }catch(e){loginErr('Could not sign in — '+(e.message||e));}
+  btn.textContent='Sign in';
 };
 function setUserChip(name,avatar){document.getElementById('uName').textContent=name;document.getElementById('uAva').textContent=avatar;document.getElementById('uWho').textContent=(MODE==='admin'?'Administrator':'Department: '+VIEWER_DEPT);}
 async function enterAdmin(){MODE='admin';document.body.classList.remove('viewer');document.getElementById('loginOverlay').classList.remove('show');
-  ADMIN_PASS=ensureMaster();ensureCodesForDepts();
-  const c=codes();if(c.ts&&Date.now()-c.ts>864e5){rotateCodes();toast('Access codes auto-rotated (24h) — click Sync to publish them.');}
   setUserChip('Administrator','👑');
-  sessionStorage.setItem('sbms_session',JSON.stringify({role:'admin',ap:ADMIN_PASS||''}));
-  renderAuthUI();renderPubMonths();await refreshAll();renderUsers();updateBackupInfo();document.getElementById('loginPass').value='';}
+  sessionStorage.setItem('sbms_session',JSON.stringify({role:'admin',pw:ADMIN_PW||''}));
+  const local=await dbGetAll();
+  if(local.length){DATA=local;applyUsers(DATA);}
+  else if(ADMIN_PUB&&ADMIN_PUB.length){DATA=ADMIN_PUB;}
+  else DATA=[];
+  renderViews();await renderAuthUI();renderPubMonths();renderUsers();updateBackupInfo();ghFillForm();
+  document.getElementById('loginPass').value='';}
 function enterViewer(dept,recs,pass){MODE='viewer';VIEWER_DEPT=dept;document.body.classList.add('viewer');document.getElementById('loginOverlay').classList.remove('show');
   setUserChip(dept,(dept[0]||'U').toUpperCase());
   sessionStorage.setItem('sbms_session',JSON.stringify({role:dept,pass}));
@@ -1133,20 +1147,27 @@ async function loadPublished(dept,pass){
 }
 
 /* ============================ Admin: passwords UI + publish ============================ */
-function renderAuthUI(){
-  const box=document.getElementById('codesBox');if(!box)return;
-  const c=ensureCodesForDepts();
-  box.innerHTML=departments.map(d=>`<div class="code-row"><b>${d}</b> <code>${c.cur[d]||'—'}</code> <button class="btn sm cpy" data-c="${escAttr(c.cur[d]||'')}">Copy</button></div>`).join('')||'<div class="mini">Add departments first (below).</div>';
+async function renderAuthUI(){
+  const box=document.getElementById('codesBox');if(!box||!ADMIN_MASTER)return;
+  const rows=[];for(const d of departments){const code=await deptCodeFor(ADMIN_MASTER,d);rows.push(`<div class="code-row"><b>${d}</b> <code>${code}</code> <button class="btn sm cpy" data-c="${escAttr(code)}">Copy</button></div>`);}
+  box.innerHTML=rows.join('')||'<div class="mini">Add departments first (below).</div>';
   box.querySelectorAll('.cpy').forEach(b=>b.onclick=()=>{try{navigator.clipboard.writeText(b.dataset.c);}catch(e){}toast('Code copied');});
-  document.getElementById('authStatus').textContent='Last issued: '+(c.ts?new Date(c.ts).toLocaleString():'—');
+  document.getElementById('authStatus').textContent='Codes derive from the admin password. Rotate = new codes after Sync.';
 }
-document.getElementById('btnRotate').onclick=()=>{if(!confirm('Issue brand-new codes for every department? Old codes stop working after you Sync.'))return;rotateCodes();renderAuthUI();toast('Codes rotated — click Sync to publish them.');};
-document.getElementById('btnAdminKey').onclick=()=>{const m=ensureMaster();const v=prompt('ADMIN KEY (back this up to use on another device).\nTo REPLACE it, paste a different key and OK:',m);if(v&&v.trim()&&v.trim()!==m){localStorage.setItem('sbms_master',v.trim());ADMIN_PASS=v.trim();toast('Admin key replaced');}else{try{navigator.clipboard.writeText(m);toast('Admin key copied');}catch(e){}}};
+document.getElementById('btnRotate').onclick=async()=>{if(!confirm('Issue brand-new codes for every department? Old codes stop working after you Sync.'))return;setRot(newRot());await renderAuthUI();toast('Codes rotated — click Sync to publish them.');};
+document.getElementById('btnAdminKey').onclick=async()=>{
+  const np=prompt('CHANGE the Administrator password.\nEnter a NEW password (min 6 chars). Everyone will need to re-Sync/re-login. Leave blank to cancel:');
+  if(!np||np.length<6){if(np!==null&&np!=='')toast('Password must be at least 6 characters');return;}
+  ADMIN_MASTER=await masterFromPassword(np);ADMIN_PW=np;await saveAdminVerify(np);
+  sessionStorage.setItem('sbms_session',JSON.stringify({role:'admin',pw:np}));
+  await renderAuthUI();toast('Admin password changed — you MUST click Sync now to re-encrypt everything.');
+};
 function monthsInData(){return [...new Set(DATA.filter(r=>r.year&&r.month).map(r=>r.year+'-'+String(r.month).padStart(2,'0')))].sort();}
 function renderPubMonths(){const s=document.getElementById('pubMonth');if(!s)return;s.innerHTML=monthsInData().map(m=>`<option>${m}</option>`).join('')||'<option value="">— no data —</option>';}
 function cleanRec(r){const o={};['userId','userName','department','mobile','invoiceNumber','accountNumber','customer','company','invoiceDate','billingPeriod','year','month','quarter','currentCharges','prevAmountDue','remainingBalance','totalAmountDue','planCharge','deviceCost','deviceTerm','discounts','vat','creditLimit','dueDate','invoiceFolder','invoiceFile','status'].forEach(k=>{if(r[k]!=null&&r[k]!=='')o[k]=r[k];});return o;}
 async function buildMonthFile(mo){
-  const mk=ensureMaster();const cds=ensureCodesForDepts();
+  if(!ADMIN_MASTER){toast('Sign in as Administrator first');return null;}
+  const mk=masterStr(ADMIN_MASTER);
   applyUsers(DATA);
   const recs=DATA.filter(r=>(r.year+'-'+String(r.month).padStart(2,'0'))===mo);
   const groups={};recs.forEach(r=>{const d=r.department||'__unassigned__';(groups[d]=groups[d]||[]).push(cleanRec(r));});
@@ -1155,7 +1176,7 @@ async function buildMonthFile(mo){
     const rawDK=crypto.getRandomValues(new Uint8Array(32));const dk=await importAES(rawDK);
     const enc=await aesEnc(dk,JSON.stringify(groups[d]));
     const keys={__admin__:await wrapDK(rawDK,mk)};
-    if(d!=='__unassigned__'&&cds.cur[d])keys[d]=await wrapDK(rawDK,cds.cur[d]);
+    if(d!=='__unassigned__')keys[d]=await wrapDK(rawDK,await deptCodeFor(ADMIN_MASTER,d));
     depts[d]={iv:enc.iv,ct:enc.ct,keys};
   }
   return {month:mo,generated:new Date().toISOString(),depts};
@@ -1184,9 +1205,10 @@ document.getElementById('btnGhTest').onclick=async()=>{const g=ghReadForm();cons
 async function syncNow(){
   const g=ghReadForm();const st=document.getElementById('ghStatus');
   if(!g.owner||!g.repo||!g.token){toast('Set repo + token in Backup → Sync first');setView('backup');return;}
-  if(!ADMIN_PASS){toast('Enter admin password (Settings → Access) first');return;}
+  if(!ADMIN_MASTER){toast('Sign in as Administrator first');return;}
+  if(!ROT_SALT)setRot(newRot());
   saveGh(g);const months=monthsInData();st.textContent='Building & encrypting '+months.length+' month(s)…';
-  const files=[['index.json',JSON.stringify({generated:new Date().toISOString(),months,departments},null,2)]];
+  const files=[['index.json',JSON.stringify({generated:new Date().toISOString(),months,departments,rotSalt:ROT_SALT},null,2)]];
   for(const mo of months){const f=await buildMonthFile(mo);if(f)files.push([mo+'.json',JSON.stringify(f)]);}
   let done=0,failed=0,log='';
   for(const [name,content] of files){const path=g.path+'/'+name;
@@ -1205,7 +1227,12 @@ async function refreshViewsOnly(){renderViews();}
   try{await loadLib('chart');}catch(e){}
   initAuthUI();
   const sess=JSON.parse(sessionStorage.getItem('sbms_session')||'null');
-  if(sess&&sess.role==='admin'&&adminAllowed()){await enterAdmin();}  // resume admin within this browser session
+  if(sess&&sess.role==='admin'&&sess.pw){
+    try{const mb=await masterFromPassword(sess.pw);const idx=await fetchIndex();let pub=null;
+      if(idx&&idx.months&&idx.months.length){try{pub=await loadPublishedAdmin(mb,idx);}catch(e){pub=null;}}
+      ADMIN_MASTER=mb;ADMIN_PW=sess.pw;ADMIN_PUB=pub;let rs=(idx&&idx.rotSalt)||rotLocal();if(!rs)rs=newRot();setRot(rs);await enterAdmin();
+    }catch(e){showLogin();}
+  }
   else if(sess&&sess.role&&sess.role!=='admin'&&sess.pass){try{const recs=await loadPublished(sess.role,sess.pass);if(recs.length){enterViewer(sess.role,recs,sess.pass);}else showLogin();}catch(e){showLogin();}}
   else showLogin();
 })();
