@@ -1208,7 +1208,11 @@ document.getElementById('loginBtn').onclick=async()=>{
       const idx=await fetchIndex();
       let full=false,ok=false;
       if(pass===DEFAULT_PW){full=true;ok=true;}
-      else if(await tempVerify(pass,idx)){full=false;ok=true;}
+      else{
+        const localHasTemp=!!(adminCfg()&&adminCfg().verify);
+        if(!localHasTemp&&(!idx||!idx.tempHash)){loginErr('Couldn’t verify a temp password on this device — the published data (data/index.json) didn’t load, or no temp password has been Synced yet. Check your connection, or use the master password here.');btn.textContent='Sign in';return;}
+        if(await tempVerify(pass,idx)){full=false;ok=true;}
+      }
       if(!ok){loginErr('Wrong administrator password.');btn.textContent='Sign in';return;}
       const mb=await masterFromPassword(DEFAULT_PW);
       ADMIN_MASTER=mb;ADMIN_PW=pass;ADMIN_FULL=full;let rs=(idx&&idx.rotSalt)||rotLocal();if(!rs)rs=newRot();setRot(rs);
