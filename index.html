@@ -81,7 +81,7 @@ button,input,select{font-family:inherit;color:inherit}
  box-shadow:var(--shadow);transition:var(--transition);position:relative;overflow:hidden}
 .card:hover{transform:translateY(-3px);border-color:color-mix(in srgb,var(--accent) 40%,var(--border))}
 .card .k{color:var(--muted);font-size:12px;font-weight:600;display:flex;align-items:center;gap:8px}
-.card .v{font-size:26px;font-weight:800;margin-top:9px;letter-spacing:-.5px}
+.card .v{font-size:19.5px;font-weight:800;margin-top:9px;letter-spacing:-.3px}
 .card .d{font-size:11.5px;color:var(--muted2);margin-top:6px}
 .card .chip{position:absolute;top:14px;right:14px;font-size:15px;opacity:.5}
 .panel{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:18px;backdrop-filter:blur(14px);box-shadow:var(--shadow);margin-top:16px}
@@ -166,6 +166,33 @@ body.viewer .adminOnly{display:none!important}
 .login-card .err{color:#ff8080;font-size:12px;margin-top:10px;min-height:16px}
 .login-card .note{color:var(--muted2);font-size:11.5px;margin-top:14px;line-height:1.5}
 .badge-role{display:inline-flex;align-items:center;gap:6px;background:var(--panel);border:1px solid var(--border);border-radius:20px;padding:4px 11px;font-size:12px;font-weight:600}
+/* collapsible sidebar */
+#collapseBtn{background:var(--panel);border:1px solid var(--border);border-radius:10px;width:34px;height:34px;cursor:pointer;font-size:16px;color:var(--muted);display:grid;place-items:center}
+#collapseBtn:hover{background:var(--hover);color:var(--text)}
+body.collapsed{--sidebar-w:66px}
+.sidebar{overflow-x:hidden}
+body.collapsed .brand>div:last-child{display:none}
+body.collapsed .brand{justify-content:center}
+body.collapsed .nav-group{font-size:0;height:8px}
+body.collapsed .nav a{justify-content:center;font-size:0}
+body.collapsed .nav a .ic{font-size:16px}
+body.collapsed .nav a .badge{display:none}
+body.collapsed .nav a.active::before{display:none}
+body.collapsed .sidebar>.mini,body.collapsed #userMenu .label,body.collapsed #userMenu .caret{display:none}
+body.collapsed #userMenu .userchip{justify-content:center}
+/* user menu */
+#userMenu{position:relative;padding:8px 12px}
+.userchip{width:100%;display:flex;align-items:center;gap:9px;background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:7px 10px;cursor:pointer;color:var(--text);font-size:12.5px;font-weight:600}
+.userchip:hover{background:var(--hover)}
+.uava{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;display:grid;place-items:center;font-weight:800;font-size:12px;flex:0 0 auto}
+.userpop{position:absolute;bottom:calc(100% + 6px);left:12px;right:12px;background:var(--panel-solid);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);padding:6px;display:none;z-index:60}
+.userpop.show{display:block}
+.userpop a{display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:9px;font-size:13px;color:var(--text);cursor:pointer;text-decoration:none}
+.userpop a:hover{background:var(--hover)}
+.userpop .sep{height:1px;background:var(--border);margin:4px 2px}
+.userpop .who{padding:8px 11px;font-size:11.5px;color:var(--muted)}
+.code-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px}
+.code-row b{min-width:120px}.code-row code{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:4px 10px;font-size:13px;letter-spacing:1px}
 </style>
 </head>
 <body>
@@ -175,7 +202,6 @@ body.viewer .adminOnly{display:none!important}
     <nav class="nav" id="nav">
       <div class="nav-group">Monitor</div>
       <a data-view="dashboard" class="active"><span class="ic">▦</span> Dashboard</a>
-      <a data-view="import" class="adminOnly"><span class="ic">⤓</span> Import PDFs</a>
       <a data-view="grid"><span class="ic">▤</span> Data Grid <span class="badge" id="navCount">0</span></a>
       <a data-view="preview" class="adminOnly"><span class="ic">◈</span> Billing Preview</a>
       <div class="nav-group">Insights</div>
@@ -185,20 +211,26 @@ body.viewer .adminOnly{display:none!important}
       <a data-view="charts"><span class="ic">◑</span> Charts</a>
       <div class="nav-group">System</div>
       <a data-view="settings"><span class="ic">⚙</span> Settings &amp; Appearance</a>
-      <a data-view="backup" class="adminOnly"><span class="ic">⛃</span> Backup, Restore &amp; Publish</a>
-      <a data-view="about"><span class="ic">ⓘ</span> Help &amp; About</a>
+      <a data-view="backup" class="adminOnly"><span class="ic">⛃</span> Data, Import &amp; Sync</a>
     </nav>
     <div class="spacer" style="flex:1"></div>
-    <div style="padding:8px 12px"><span class="badge-role" id="roleBadge">—</span> <a id="logoutBtn" style="cursor:pointer;color:var(--muted);font-size:12px;margin-left:6px">Sign out</a></div>
-    <div class="mini" style="padding:2px 12px 10px">Local · Offline · No server<br><span id="dbInfo">IndexedDB ready</span></div>
+    <div id="userMenu">
+      <button class="userchip" id="userChip"><span class="uava" id="uAva">A</span><span class="label" id="uName">Administrator</span><span class="caret" style="margin-left:auto;color:var(--muted)">▴</span></button>
+      <div class="userpop" id="userPop">
+        <div class="who" id="uWho">Signed in</div>
+        <a data-view="settings" id="umSettings"><span>⚙</span> Settings</a>
+        <div class="sep"></div>
+        <a id="logoutBtn"><span>🚪</span> Sign out</a>
+      </div>
+    </div>
+    <span id="dbInfo" style="display:none"></span>
   </aside>
 
   <div class="main">
     <div class="topbar">
+      <button id="collapseBtn" title="Collapse / expand sidebar">☰</button>
       <div><h1 id="viewTitle">Dashboard</h1><div class="sub" id="viewSub">Overview of all Smart billing data</div></div>
       <div class="search"><span>🔍</span><input id="globalSearch" placeholder="Search phone, invoice #, user, month, amount…" /></div>
-      <button class="btn adminOnly" id="btnTopSync" title="Push encrypted data to GitHub"><span>🔄</span> Sync</button>
-      <button class="btn primary adminOnly" id="btnQuickImport"><span>⤓</span> Import Folder</button>
     </div>
 
     <div class="content">
@@ -208,35 +240,6 @@ body.viewer .adminOnly{display:none!important}
         <div class="grid2">
           <div class="panel"><h3>◑ Monthly Total Amount Due</h3><div class="hint">Sum of total amount due per billing month</div><div class="chartbox"><canvas id="dashChartMonthly"></canvas></div></div>
           <div class="panel"><h3>◐ Top 8 Users by Lifetime Charges</h3><div class="hint">Highest total current charges</div><div class="chartbox"><canvas id="dashChartTop"></canvas></div></div>
-        </div>
-      </section>
-
-      <!-- IMPORT -->
-      <section class="view" id="v-import">
-        <div class="panel">
-          <h3>⤓ Import Smart Billing Invoices</h3>
-          <div class="hint">Select your <b>3. Smart Billing Invoices</b> folder. Every sub-folder is scanned recursively, each PDF is read in-browser, and billing data is extracted automatically. Handles all Smart layouts (old &amp; the new May-2026 unified invoice).</div>
-          <div class="row" style="margin-bottom:14px">
-            <button class="btn primary" id="btnPickFolder"><span>📁</span> Select Folder</button>
-            <button class="btn" id="btnPickFS" title="File System Access API (rename/delete)"><span>🗂️</span> Select Folder (advanced)</button>
-            <div class="spacer"></div>
-            <select class="inp" id="dupMode" title="Duplicate handling">
-              <option value="merge">Duplicates: Merge / update (recommended)</option><option value="keepboth">Duplicates: Keep both</option>
-            </select>
-          </div>
-          <div class="drop" id="dropzone"><div class="big">📥</div><div><b>Drop a folder here</b> or click <b>Select Folder</b></div>
-            <div class="mini" style="margin-top:6px">Reads *.pdf recursively · User names/departments auto-linked from your mapping</div></div>
-          <input type="file" id="folderInput" webkitdirectory directory multiple accept="application/pdf" style="display:none" />
-          <div class="progress-wrap" id="progWrap">
-            <div class="progress"><div class="bar" id="progBar"></div></div>
-            <div class="stats-line">
-              <div>Files found: <b id="stFound">0</b></div><div>Parsed: <b id="stParsed">0</b></div>
-              <div>New: <b id="stNew">0</b></div><div>Duplicates: <b id="stDup">0</b></div>
-              <div>Image/skipped: <b id="stImg">0</b></div><div>Errors: <b id="stErr">0</b></div>
-              <div>Elapsed: <b id="stElapsed">0s</b></div><div>ETA: <b id="stEta">—</b></div>
-            </div>
-            <div class="log" id="importLog"></div>
-          </div>
         </div>
       </section>
 
@@ -321,7 +324,7 @@ body.viewer .adminOnly{display:none!important}
           <div class="hint">Table 1 — lifetime totals per line. Click a row to load its full billing history below.</div>
           <div class="tablewrap" style="max-height:42vh;margin-top:8px">
             <table><thead><tr>
-              <th>Mobile #</th><th>User</th><th>Dept</th><th>Invoices</th><th>Lifetime Charges</th><th>Total Amount Due</th><th>Avg Bill</th><th>Highest</th><th>Lowest</th>
+              <th>User ID</th><th>User Name</th><th>Department</th><th>Mobile #</th>
             </tr></thead><tbody id="phonesBody"></tbody></table>
           </div>
         </div>
@@ -360,15 +363,10 @@ body.viewer .adminOnly{display:none!important}
         </div>
 
         <div class="panel adminOnly">
-          <h3>🔐 Access &amp; Passwords</h3>
-          <div class="hint">Set the Administrator password and one password per department. Department viewers use these to sign in and decrypt <b>only their own</b> data. Passwords are stored on this admin machine only (never in the repo) so publishing can encrypt with them.</div>
-          <div class="grid2" style="margin-top:6px">
-            <label class="fld">Administrator password<input class="inp" id="pwAdmin" type="password" placeholder="set / change admin password"></label>
-            <label class="fld">Confirm admin password<input class="inp" id="pwAdmin2" type="password" placeholder="repeat"></label>
-          </div>
-          <div class="sectionlabel" style="margin:12px 0 6px;color:var(--muted2)">Department passwords</div>
-          <div id="deptPw" class="grid2"></div>
-          <div class="row" style="margin-top:12px"><button class="btn sm primary" id="btnSaveAuth">💾 Save passwords</button><span class="mini" id="authStatus"></span></div>
+          <h3>🔐 Access codes</h3>
+          <div class="hint">Passwords are generated <b>automatically</b> — you don't set them. Give each department its code; members enter it to view <b>only their own</b> data. Codes live on this admin device only. They auto-rotate every 24h while you're signed in; you can also <b>Rotate</b> manually. After any change, click <b>Sync</b> so the new codes take effect.</div>
+          <div id="codesBox"></div>
+          <div class="row" style="margin-top:12px"><button class="btn sm" id="btnRotate">🔄 Rotate all codes</button><button class="btn sm" id="btnAdminKey">🔑 Admin key…</button><span class="mini" id="authStatus"></span></div>
         </div>
 
         <div class="panel adminOnly">
@@ -400,11 +398,36 @@ body.viewer .adminOnly{display:none!important}
         </div>
       </section>
 
-      <!-- BACKUP -->
+      <!-- DATA, IMPORT & SYNC -->
       <section class="view" id="v-backup">
+        <div class="panel adminOnly">
+          <h3>⤓ Import Smart Billing Invoices</h3>
+          <div class="hint">Select your <b>3. Smart Billing Invoices</b> folder. Every sub-folder is scanned recursively, each PDF is read and parsed in-browser (all Smart layouts, old &amp; the new May-2026 unified invoice). Re-importing merges/updates by phone + billing month.</div>
+          <div class="row" style="margin-bottom:14px">
+            <button class="btn primary" id="btnPickFolder"><span>📁</span> Select Folder</button>
+            <button class="btn" id="btnPickFS" title="File System Access API (rename/delete)"><span>🗂️</span> Select Folder (advanced)</button>
+            <div class="spacer"></div>
+            <select class="inp" id="dupMode" title="Duplicate handling">
+              <option value="merge">Duplicates: Merge / update (recommended)</option><option value="keepboth">Duplicates: Keep both</option>
+            </select>
+          </div>
+          <div class="drop" id="dropzone"><div class="big">📥</div><div><b>Drop a folder here</b> or click <b>Select Folder</b></div>
+            <div class="mini" style="margin-top:6px">Reads *.pdf recursively · User names/departments auto-linked from your mapping</div></div>
+          <input type="file" id="folderInput" webkitdirectory directory multiple accept="application/pdf" style="display:none" />
+          <div class="progress-wrap" id="progWrap">
+            <div class="progress"><div class="bar" id="progBar"></div></div>
+            <div class="stats-line">
+              <div>Files found: <b id="stFound">0</b></div><div>Parsed: <b id="stParsed">0</b></div>
+              <div>New: <b id="stNew">0</b></div><div>Duplicates: <b id="stDup">0</b></div>
+              <div>Image/skipped: <b id="stImg">0</b></div><div>Errors: <b id="stErr">0</b></div>
+              <div>Elapsed: <b id="stElapsed">0s</b></div><div>ETA: <b id="stEta">—</b></div>
+            </div>
+            <div class="log" id="importLog"></div>
+          </div>
+        </div>
         <div class="panel">
           <h3>⛃ Backup &amp; Restore</h3>
-          <div class="hint">Export your parsed database + user mapping + departments to a JSON file, or restore from one. PDFs stay in your folder.</div>
+          <div class="hint">A plain-JSON safety copy of your parsed data + user mapping + departments (kept private — not the shared file). Restore rebuilds from it. Different from Sync, which publishes the <b>encrypted</b> data to GitHub.</div>
           <div class="row" style="margin-top:8px">
             <button class="btn primary" id="btnBackup">⬇ Export Backup (JSON)</button>
             <button class="btn" id="btnRestore">⬆ Restore from JSON</button>
@@ -414,22 +437,10 @@ body.viewer .adminOnly{display:none!important}
             <button class="btn danger" id="btnWipe">🗑 Clear All Invoice Data</button>
           </div>
           <div class="mini" style="margin-top:12px" id="backupInfo"></div>
+          <span id="pubMonth" style="display:none"></span><span id="pubStatus" style="display:none"></span>
         </div>
         <div class="panel">
-          <h3>🚀 Publish encrypted data (for the private GitHub repo)</h3>
-          <div class="hint">Generates <b>encrypted monthly files</b> + a manifest. Each month is split per department and encrypted so a department password decrypts only its own slice (the admin password decrypts everything). Commit these into your repo's <kbd>data/</kbd> folder. Set passwords first in <b>Settings → Access &amp; Passwords</b>.</div>
-          <div class="row" style="margin-bottom:8px">
-            <label class="fld" style="flex-direction:row;align-items:center;gap:8px"><span>Month</span>
-              <select class="inp" id="pubMonth"></select></label>
-            <button class="btn sm primary" id="btnPubMonth">⬇ Export this month (.json)</button>
-            <button class="btn sm" id="btnPubAll">⬇ Export ALL months</button>
-            <button class="btn sm" id="btnPubIndex">⬇ Export manifest (index.json)</button>
-          </div>
-          <div class="mini" id="pubStatus" style="line-height:1.6"></div>
-          <div class="mini" style="margin-top:8px;color:var(--muted2)">Files download to your Downloads folder. Move them into <kbd>&lt;repo&gt;/data/</kbd>, then commit &amp; push (GitHub Desktop → drag files → Commit). Unassigned numbers export in an admin-only slice — assign departments first so viewers can see them.</div>
-        </div>
-        <div class="panel">
-          <h3>🔄 One-click Sync to private GitHub repo</h3>
+          <h3>🔄 Sync — publish encrypted data to GitHub (one click)</h3>
           <div class="hint">Pushes the encrypted files straight to your repo — no manual commit. Create a <b>fine-grained Personal Access Token</b> (GitHub → Settings → Developer settings → Fine-grained tokens) scoped to <b>only this repo</b> with <b>Contents: Read and write</b>, then paste it below. Stored on this machine only.</div>
           <div class="grid2" style="margin-top:6px">
             <label class="fld">Owner (user or org)<input class="inp" id="ghOwner" placeholder="e.g. r3u-tech"></label>
@@ -449,20 +460,6 @@ body.viewer .adminOnly{display:none!important}
         </div>
       </section>
 
-      <!-- ABOUT -->
-      <section class="view" id="v-about">
-        <div class="panel">
-          <h3>ⓘ How it works</h3>
-          <div class="hint" style="line-height:1.7">
-            Drop your Smart PDFs in <kbd>3. Smart Billing Invoices</kbd> (year → month → number), open this app, go to
-            <b>Import PDFs → Select Folder</b>. It parses every PDF (all Smart layouts, old &amp; new), auto-links each line to the
-            User ID / Name / Department from your mapping, and stores everything locally in IndexedDB.<br><br>
-            Explore in Dashboard, Data Grid, Billing Preview, Reports, Analytics, Charts. Manage users &amp; departments in Settings.
-          </div>
-          <h3 style="margin-top:16px">Opening the app</h3>
-          <div class="mini" style="line-height:1.7">Double-click <kbd>index.html</kbd> (works while online). For the most reliable experience run <kbd>START-Smart-Billing.bat</kbd> or host on GitHub Pages — see the README.</div>
-        </div>
-      </section>
     </div>
   </div>
 </div>
@@ -593,17 +590,22 @@ function parseSmart(text){
 }
 
 /* ============================ Import ============================ */
-function logLine(html,cls){const el=document.getElementById('importLog');const d=document.createElement('div');if(cls)d.className=cls;d.innerHTML=html;el.appendChild(d);el.scrollTop=el.scrollHeight;}
+function logLine(html,cls){const el=document.getElementById('importLog');const d=document.createElement('div');if(cls)d.className=cls;d.innerHTML=html;el.appendChild(d);while(el.childElementCount>250)el.removeChild(el.firstChild);el.scrollTop=el.scrollHeight;}
 async function extractText(file){
-  const buf=await file.arrayBuffer();const pdf=await window.pdfjsLib.getDocument({data:buf}).promise;
+  let buf=await file.arrayBuffer();
+  const pdf=await window.pdfjsLib.getDocument({data:buf,disableAutoFetch:true,disableStream:true}).promise;
   let all='';let hadText=false;const max=Math.min(pdf.numPages,10);
-  for(let p=1;p<=max;p++){const page=await pdf.getPage(p);const tc=await page.getTextContent();
-    if(tc.items.length>3)hadText=true;
-    // Feed BOTH a column-aware line reconstruction AND a raw flattened stream, so a
-    // field is still caught if line-grouping splits a label from its value.
-    all+='\n'+reconstruct(tc.items)+'\n'+tc.items.map(it=>it.str).join(' ');
-    if(/Mobile\s*Number/i.test(all) && /(TOTAL AMOUNT DUE|Total Amount Due)/i.test(all) && /Total Current/i.test(all)) break;
-  }
+  try{
+    for(let p=1;p<=max;p++){const page=await pdf.getPage(p);const tc=await page.getTextContent();
+      if(tc.items.length>3)hadText=true;
+      // Feed BOTH a column-aware line reconstruction AND a raw flattened stream, so a
+      // field is still caught if line-grouping splits a label from its value.
+      all+='\n'+reconstruct(tc.items)+'\n'+tc.items.map(it=>it.str).join(' ');
+      try{page.cleanup();}catch(e){}
+      if(/Mobile\s*Number/i.test(all) && /(TOTAL AMOUNT DUE|Total Amount Due)/i.test(all) && /Total Current/i.test(all)) break;
+      if(p>=2 && !hadText) break; // scanned/image PDF — stop early to save memory
+    }
+  } finally { try{await pdf.destroy();}catch(e){} buf=null; }  // release memory each file (prevents Out of Memory)
   return {text:all,hasText:hadText};
 }
 function reconstruct(items){const lines=[];items.forEach(it=>{const y=it.transform[5];const x=it.transform[4];const h=it.height||3;const tol=Math.max(2.5,h*0.6);
@@ -616,7 +618,7 @@ async function runImport(files){
   const pdfs=[...files].filter(f=>/\.pdf$/i.test(f.name));
   document.getElementById('progWrap').style.display='block';document.getElementById('importLog').innerHTML='';
   const S={found:pdfs.length,parsed:0,neu:0,dup:0,img:0,err:0};document.getElementById('stFound').textContent=S.found;
-  const t0=Date.now();setView('import');
+  const t0=Date.now();setView('backup');
   for(let i=0;i<pdfs.length;i++){const f=pdfs[i];const rel=(f.webkitRelativePath||f.name);
     try{
       const{text,hasText}=await extractText(f);
@@ -864,11 +866,9 @@ function renderPhones(){
   const rows=Object.entries(map).map(([k,m])=>{const u=userFor(k);return{k,m,u};})
     .filter(o=>!q||o.k.includes(q)||(o.u.userName||'').toLowerCase().includes(q)||(o.u.department||'').toLowerCase().includes(q))
     .sort((a,b)=>b.m.cur-a.m.cur);
-  document.getElementById('phonesBody').innerHTML=rows.map(({k,m,u})=>{
-    const hi=Math.max(...m.bills),lo=Math.min(...m.bills),avg=m.due/m.n;
-    return `<tr class="clickable ${k===phoneSel?'sel':''}" data-ph="${k}"><td><b>${k}</b></td><td>${u.userName||'—'}</td><td>${u.department?'<span class=chip-dept>'+u.department+'</span>':'—'}</td>
-      <td class="num">${m.n}</td><td class="num">${money(m.cur)}</td><td class="num">${money(m.due)}</td><td class="num">${money(avg)}</td><td class="num">${money(hi)}</td><td class="num">${money(lo)}</td></tr>`;
-  }).join('')||'<tr><td colspan="9"><div class="empty">No data</div></td></tr>';
+  document.getElementById('phonesBody').innerHTML=rows.map(({k,u})=>{
+    return `<tr class="clickable ${k===phoneSel?'sel':''}" data-ph="${k}"><td>${u.userId||'—'}</td><td>${u.userName||'—'}</td><td>${u.department?'<span class=chip-dept>'+u.department+'</span>':'—'}</td><td><b>${k}</b></td></tr>`;
+  }).join('')||'<tr><td colspan="4"><div class="empty">No data</div></td></tr>';
   document.querySelectorAll('#phonesBody tr.clickable').forEach(tr=>tr.onclick=()=>{phoneSel=tr.dataset.ph;renderPhones();renderPhoneDetail();});
   if(phoneSel)renderPhoneDetail();
 }
@@ -888,22 +888,24 @@ function renderReportDeptOptions(){const s=document.getElementById('reportDept')
 function renderReport(){
   const type=val('reportType');const dept=val('reportDept');
   let data=DATA.slice();if(dept==='__none__')data=data.filter(r=>!r.department);else if(dept)data=data.filter(r=>r.department===dept);
-  const g=(keyFn,label)=>{const map={};data.forEach(r=>{const k=keyFn(r);if(k==null||k==='')return;const m=map[k]||(map[k]={n:0,cur:0,due:0,vat:0,disc:0,dev:0,prev:0});
+  if(type==='grand'){const s=f=>data.reduce((a,r)=>a+(r[f]||0),0);
+    document.getElementById('reportOut').innerHTML=`<div class="cards">`+[['Invoices',data.length],['Current Charges',money(s('currentCharges'))],['Device Cost',money(s('deviceCost'))],['VAT',money(s('vat'))],['Discounts',money(s('discounts'))],['Previous Balance',money(s('prevAmountDue'))],['Total Amount Due',money(s('totalAmountDue'))]].map(c=>`<div class="card"><div class="k">${c[0]}</div><div class="v">${c[1]}</div></div>`).join('')+`</div>`;return;}
+  let keyCols,sortVal;
+  if(type==='monthly'){keyCols=[['Year',r=>r.year||''],['Month',r=>r.month?monthName(r.month):'']];sortVal=r=>(r.year||0)*100+(r.month||0);}
+  else if(type==='quarterly'){keyCols=[['Year',r=>r.year||''],['Quarter',r=>r.quarter||'']];sortVal=r=>(r.year||0)*10+(r.quarter?+String(r.quarter).replace('Q',''):0);}
+  else if(type==='yearly'){keyCols=[['Year',r=>r.year||'']];sortVal=r=>r.year||0;}
+  else if(type==='department'){keyCols=[['Department',r=>r.department||'(Unassigned)']];sortVal=r=>String(r.department||'~');}
+  else{keyCols=[['Mobile #',r=>r.mobile||''],['User Name',r=>r.userName||'']];sortVal=r=>String(r.mobile||'');}
+  const map={};
+  data.forEach(r=>{const parts=keyCols.map(c=>c[1](r));const key=parts.join('');
+    let m=map[key];if(!m)m=map[key]={parts,sv:sortVal(r),n:0,cur:0,due:0,vat:0,disc:0,dev:0,prev:0};
     m.n++;m.cur+=r.currentCharges||0;m.due+=r.totalAmountDue||0;m.vat+=r.vat||0;m.disc+=r.discounts||0;m.dev+=r.deviceCost||0;m.prev+=r.prevAmountDue||0;});
-    const keys=Object.keys(map).sort();
-    return `<div class="tablewrap"><table><thead><tr><th>${label}</th><th>Invoices</th><th>Current Charges</th><th>Device</th><th>VAT</th><th>Discounts</th><th>Prev Balance</th><th>Total Amount Due</th></tr></thead><tbody>`+
-      keys.map(k=>{const m=map[k];return `<tr><td><b>${k}</b></td><td class="num">${m.n}</td><td class="num">${money(m.cur)}</td><td class="num">${money(m.dev)}</td><td class="num">${money(m.vat)}</td><td class="num">${money(m.disc)}</td><td class="num">${money(m.prev)}</td><td class="num">${money(m.due)}</td></tr>`;}).join('')+
-      `</tbody><tfoot><tr style="font-weight:800;background:var(--grid-head)"><td>TOTAL</td><td class="num">${data.length}</td>`+
-      ['cur','dev','vat','disc','prev','due'].map(f=>`<td class="num">${money(keys.reduce((a,k)=>a+map[k][f],0))}</td>`).join('')+`</tr></tfoot></table></div>`;};
-  let html='';
-  if(type==='monthly')html=g(r=>r.year&&r.month?r.year+'-'+String(r.month).padStart(2,'0'):null,'Month');
-  else if(type==='quarterly')html=g(r=>r.year&&r.quarter?r.year+' '+r.quarter:null,'Quarter');
-  else if(type==='yearly')html=g(r=>r.year,'Year');
-  else if(type==='department')html=g(r=>r.department||'(Unassigned)','Department');
-  else if(type==='phone')html=g(r=>r.userName?r.mobile+' · '+r.userName:r.mobile,'Mobile / User');
-  else if(type==='grand'){const s=f=>data.reduce((a,r)=>a+(r[f]||0),0);
-    html=`<div class="cards">`+[['Invoices',data.length],['Current Charges',money(s('currentCharges'))],['Device Cost',money(s('deviceCost'))],['VAT',money(s('vat'))],['Discounts',money(s('discounts'))],['Previous Balance',money(s('prevAmountDue'))],['Total Amount Due',money(s('totalAmountDue'))]].map(c=>`<div class="card"><div class="k">${c[0]}</div><div class="v">${c[1]}</div></div>`).join('')+`</div>`;}
-  document.getElementById('reportOut').innerHTML=html;
+  const keys=Object.keys(map).sort((a,b)=>{const A=map[a].sv,B=map[b].sv;if(typeof A==='number'&&typeof B==='number')return A-B;return String(A).localeCompare(String(B));});
+  const th=keyCols.map(c=>`<th>${c[0]}</th>`).join('')+`<th>Invoices</th><th>Current Charges</th><th>Device</th><th>VAT</th><th>Discounts</th><th>Prev Balance</th><th>Total Amount Due</th>`;
+  const body=keys.map(k=>{const m=map[k];return `<tr>`+m.parts.map(p=>`<td><b>${p===''?'—':p}</b></td>`).join('')+`<td class="num">${m.n}</td><td class="num">${money(m.cur)}</td><td class="num">${money(m.dev)}</td><td class="num">${money(m.vat)}</td><td class="num">${money(m.disc)}</td><td class="num">${money(m.prev)}</td><td class="num">${money(m.due)}</td></tr>`;}).join('');
+  const tot=f=>keys.reduce((a,k)=>a+map[k][f],0);
+  const foot=`<tr style="font-weight:800;background:var(--grid-head)"><td>TOTAL</td>`+keyCols.slice(1).map(()=>'<td></td>').join('')+`<td class="num">${data.length}</td>`+['cur','dev','vat','disc','prev','due'].map(f=>`<td class="num">${money(tot(f))}</td>`).join('')+`</tr>`;
+  document.getElementById('reportOut').innerHTML=`<div class="tablewrap"><table><thead><tr>${th}</tr></thead><tbody>${body||`<tr><td colspan="${keyCols.length+7}"><div class="empty">No data</div></td></tr>`}</tbody><tfoot>${foot}</tfoot></table></div>`;
 }
 document.getElementById('reportType').addEventListener('change',renderReport);
 document.getElementById('reportDept').addEventListener('change',renderReport);
@@ -1019,7 +1021,7 @@ document.getElementById('mapInput').onchange=async e=>{const f=e.target.files[0]
   saveUserMap();renderUsers();reapplyUsersEverywhere();toast('Imported mapping for '+added+' rows');e.target.value='';};
 
 /* ============================ Navigation ============================ */
-const VIEW_META={dashboard:['Dashboard','Overview of all Smart billing data'],import:['Import PDFs','Scan a folder and extract billing data'],grid:['Data Grid','Every invoice — click a row to edit'],preview:['Billing Preview','Inspect a single invoice'],reports:['Reports','Summaries by month, quarter, year, department'],analytics:['Analytics','Trends and top lists'],phones:['Phone Numbers','Per-line totals + full history'],charts:['Charts','Visual breakdowns'],settings:['Settings & Appearance','Themes, departments, user links'],backup:['Backup & Restore','Export or restore your data'],about:['Help & About','How the system works']};
+const VIEW_META={dashboard:['Dashboard','Overview of all Smart billing data'],grid:['Data Grid','Every invoice — click a row to edit'],preview:['Billing Preview','Inspect a single invoice'],reports:['Reports','Summaries by month, quarter, year, department'],analytics:['Analytics','Trends and top lists'],phones:['Phone Numbers','Per-line totals + full history'],charts:['Charts','Visual breakdowns'],settings:['Settings & Appearance','Themes, departments, user links'],backup:['Data, Import & Sync','Import PDFs, back up, and publish to GitHub']};
 let currentView='dashboard';
 function setView(v){currentView=v;document.querySelectorAll('.view').forEach(s=>s.classList.remove('active'));document.getElementById('v-'+v).classList.add('active');
   document.querySelectorAll('#nav a').forEach(a=>a.classList.toggle('active',a.dataset.view===v));
@@ -1030,7 +1032,6 @@ document.querySelectorAll('#nav a').forEach(a=>a.onclick=()=>setView(a.dataset.v
 
 /* ============================ Folder pickers ============================ */
 document.getElementById('btnPickFolder').onclick=()=>document.getElementById('folderInput').click();
-document.getElementById('btnQuickImport').onclick=()=>{setView('import');document.getElementById('folderInput').click();};
 document.getElementById('dropzone').onclick=()=>document.getElementById('folderInput').click();
 document.getElementById('folderInput').onchange=e=>{const files=e.target.files;[...files].forEach(f=>fileHandles[f.webkitRelativePath||f.name]=f);runImport(files);};
 document.getElementById('btnPickFS').onclick=async()=>{if(!window.showDirectoryPicker)return toast('Not supported here — use Select Folder');
@@ -1061,45 +1062,57 @@ async function aesDec(key,ivB,ctB){const pt=await crypto.subtle.decrypt({name:'A
 async function wrapDK(rawDK,pass){const salt=crypto.getRandomValues(new Uint8Array(16));const kek=await deriveKEK(pass,salt);const iv=crypto.getRandomValues(new Uint8Array(12));const ct=await crypto.subtle.encrypt({name:'AES-GCM',iv},kek,rawDK);return{salt:b64(salt),iv:b64(iv),ct:b64(ct)};}
 async function unwrapDK(w,pass){const kek=await deriveKEK(pass,ub64(w.salt));const raw=await crypto.subtle.decrypt({name:'AES-GCM',iv:ub64(w.iv)},kek,ub64(w.ct));return importAES(raw);}
 
-/* ============================ Auth + roles ============================ */
+/* ============================ Auth + roles (auto-generated codes) ============================ */
 let MODE=null,VIEWER_DEPT=null,ADMIN_PASS=null;
-function authCfg(){return JSON.parse(localStorage.getItem('sbms_auth')||'{"depts":{}}');}
-function saveAuth(c){localStorage.setItem('sbms_auth',JSON.stringify(c));}
-async function setAdminPassword(pass){const c=authCfg();const salt=crypto.getRandomValues(new Uint8Array(16));c.admin={salt:b64(salt),verify:await deriveBits(pass,salt)};saveAuth(c);}
-async function verifyAdmin(pass){const c=authCfg();if(!c.admin)return false;return (await deriveBits(pass,ub64(c.admin.salt)))===c.admin.verify;}
-function deptPass(d){return (authCfg().depts||{})[d]||'';}
+function genCode(n){n=n||10;const a='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';let s='';const b=crypto.getRandomValues(new Uint8Array(n));for(let i=0;i<n;i++)s+=a[b[i]%a.length];return s;}
+function master(){return localStorage.getItem('sbms_master');}
+function ensureMaster(){let m=localStorage.getItem('sbms_master');if(!m){m=genCode(28);localStorage.setItem('sbms_master',m);}return m;}
+function codes(){return JSON.parse(localStorage.getItem('sbms_codes')||'{}');}
+function saveCodes(c){localStorage.setItem('sbms_codes',JSON.stringify(c));}
+function ensureCodesForDepts(){const c=codes();c.cur=c.cur||{};let changed=false;departments.forEach(d=>{if(!c.cur[d]){c.cur[d]=genCode(10);changed=true;}});if(!c.ts||changed){c.ts=c.ts||Date.now();saveCodes(c);}return c;}
+function rotateCodes(){const c=codes();c.cur={};departments.forEach(d=>{c.cur[d]=genCode(10);});c.ts=Date.now();saveCodes(c);}
+function deptCode(d){const c=codes();return (c.cur&&c.cur[d])||'';}
 
 function initAuthUI(){
   const sel=document.getElementById('loginRole');
-  sel.innerHTML=`<option value="admin">Administrator (full access)</option>`+departments.map(d=>`<option value="${escAttr(d)}">${d} — department view</option>`).join('');
-  document.getElementById('loginNote').innerHTML = authCfg().admin ? 'Department viewers see only their own data. Passwords are set by the administrator.' : '<b>First run:</b> choose an Administrator password now — it will be saved on this machine.';
+  sel.innerHTML=`<option value="__admin__">Administrator (this device)</option>`+departments.map(d=>`<option value="${escAttr(d)}">${d} — department view</option>`).join('');
+  toggleLoginPass();
+  document.getElementById('loginNote').innerHTML='Department members enter the access code given by the administrator and see only their own data. The administrator signs in on their own device — no password to remember.';
 }
+function toggleLoginPass(){const admin=document.getElementById('loginRole').value==='__admin__';document.getElementById('loginPass').style.display=admin?'none':'';document.querySelector('.login-card label:nth-of-type(2)').style.display=admin?'none':'';}
+document.getElementById('loginRole').addEventListener('change',toggleLoginPass);
 function showLogin(){document.getElementById('loginOverlay').classList.add('show');document.getElementById('loginPass').focus();}
 function loginErr(m){document.getElementById('loginErr').textContent=m||'';}
 document.getElementById('loginPass').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('loginBtn').click();});
 document.getElementById('loginBtn').onclick=async()=>{
   const role=document.getElementById('loginRole').value;const pass=document.getElementById('loginPass').value;loginErr('');
-  if(role==='admin'){
-    if(!authCfg().admin){if(pass.length<4){loginErr('Choose a password (min 4 characters).');return;}await setAdminPassword(pass);ADMIN_PASS=pass;await enterAdmin();}
-    else if(await verifyAdmin(pass)){ADMIN_PASS=pass;await enterAdmin();}
-    else loginErr('Wrong administrator password.');
-  }else{
+  if(role==='__admin__'){ensureMaster();ADMIN_PASS=master();await enterAdmin();}
+  else{
     document.getElementById('loginBtn').textContent='Loading…';
-    try{const recs=await loadPublished(role,pass);if(!recs.length){loginErr('No published data for '+role+' yet (or wrong password).');}
-      else{enterViewer(role,recs,pass);}}
-    catch(e){loginErr('Wrong password, or no published data found.');}
+    try{const recs=await loadPublished(role,pass.trim());if(!recs.length){loginErr('No published data for '+role+' yet, or wrong code.');}
+      else{enterViewer(role,recs,pass.trim());}}
+    catch(e){loginErr('Wrong access code, or no published data found.');}
     document.getElementById('loginBtn').textContent='Sign in';
   }
 };
+function setUserChip(name,avatar){document.getElementById('uName').textContent=name;document.getElementById('uAva').textContent=avatar;document.getElementById('uWho').textContent=(MODE==='admin'?'Administrator':'Department: '+VIEWER_DEPT);}
 async function enterAdmin(){MODE='admin';document.body.classList.remove('viewer');document.getElementById('loginOverlay').classList.remove('show');
-  document.getElementById('roleBadge').textContent='👑 Administrator';
+  ADMIN_PASS=ensureMaster();ensureCodesForDepts();
+  const c=codes();if(c.ts&&Date.now()-c.ts>864e5){rotateCodes();toast('Access codes auto-rotated (24h) — click Sync to publish them.');}
+  setUserChip('Administrator','👑');
   sessionStorage.setItem('sbms_session',JSON.stringify({role:'admin',ap:ADMIN_PASS||''}));
   renderAuthUI();renderPubMonths();await refreshAll();renderUsers();updateBackupInfo();document.getElementById('loginPass').value='';}
 function enterViewer(dept,recs,pass){MODE='viewer';VIEWER_DEPT=dept;document.body.classList.add('viewer');document.getElementById('loginOverlay').classList.remove('show');
-  document.getElementById('roleBadge').textContent='👁 '+dept;
+  setUserChip(dept,(dept[0]||'U').toUpperCase());
   sessionStorage.setItem('sbms_session',JSON.stringify({role:dept,pass}));
   DATA=recs;renderViews();setView('dashboard');document.getElementById('loginPass').value='';}
 document.getElementById('logoutBtn').onclick=()=>{sessionStorage.removeItem('sbms_session');location.reload();};
+document.getElementById('umSettings').onclick=()=>{setView('settings');document.getElementById('userPop').classList.remove('show');};
+document.getElementById('userChip').onclick=e=>{e.stopPropagation();document.getElementById('userPop').classList.toggle('show');};
+document.addEventListener('click',()=>document.getElementById('userPop').classList.remove('show'));
+// sidebar collapse
+if(localStorage.getItem('sbms_collapsed')==='1')document.body.classList.add('collapsed');
+document.getElementById('collapseBtn').onclick=()=>{document.body.classList.toggle('collapsed');localStorage.setItem('sbms_collapsed',document.body.classList.contains('collapsed')?'1':'0');};
 
 /* ============================ Viewer: load encrypted published data ============================ */
 async function loadPublished(dept,pass){
@@ -1117,21 +1130,19 @@ async function loadPublished(dept,pass){
 
 /* ============================ Admin: passwords UI + publish ============================ */
 function renderAuthUI(){
-  const c=authCfg();const box=document.getElementById('deptPw');if(!box)return;
-  box.innerHTML=departments.map(d=>`<label class="fld">${d}<input class="inp dpw" data-d="${escAttr(d)}" type="password" value="${escAttr((c.depts||{})[d]||'')}" placeholder="set password"></label>`).join('');
-  document.getElementById('authStatus').textContent=c.admin?'Admin password set. '+Object.keys(c.depts||{}).filter(k=>c.depts[k]).length+' department passwords set.':'No admin password yet.';
+  const box=document.getElementById('codesBox');if(!box)return;
+  const c=ensureCodesForDepts();
+  box.innerHTML=departments.map(d=>`<div class="code-row"><b>${d}</b> <code>${c.cur[d]||'—'}</code> <button class="btn sm cpy" data-c="${escAttr(c.cur[d]||'')}">Copy</button></div>`).join('')||'<div class="mini">Add departments first (below).</div>';
+  box.querySelectorAll('.cpy').forEach(b=>b.onclick=()=>{try{navigator.clipboard.writeText(b.dataset.c);}catch(e){}toast('Code copied');});
+  document.getElementById('authStatus').textContent='Last issued: '+(c.ts?new Date(c.ts).toLocaleString():'—');
 }
-document.getElementById('btnSaveAuth').onclick=async()=>{
-  const a=document.getElementById('pwAdmin').value,a2=document.getElementById('pwAdmin2').value;
-  if(a){if(a!==a2){toast('Admin passwords do not match');return;}await setAdminPassword(a);ADMIN_PASS=a;sessionStorage.setItem('sbms_session',JSON.stringify({role:'admin',ap:a}));}
-  const c=authCfg();c.depts=c.depts||{};document.querySelectorAll('#deptPw .dpw').forEach(i=>{c.depts[i.dataset.d]=i.value;});saveAuth(c);
-  document.getElementById('pwAdmin').value='';document.getElementById('pwAdmin2').value='';renderAuthUI();toast('Passwords saved (this machine only)');
-};
+document.getElementById('btnRotate').onclick=()=>{if(!confirm('Issue brand-new codes for every department? Old codes stop working after you Sync.'))return;rotateCodes();renderAuthUI();toast('Codes rotated — click Sync to publish them.');};
+document.getElementById('btnAdminKey').onclick=()=>{const m=ensureMaster();const v=prompt('ADMIN KEY (back this up to use on another device).\nTo REPLACE it, paste a different key and OK:',m);if(v&&v.trim()&&v.trim()!==m){localStorage.setItem('sbms_master',v.trim());ADMIN_PASS=v.trim();toast('Admin key replaced');}else{try{navigator.clipboard.writeText(m);toast('Admin key copied');}catch(e){}}};
 function monthsInData(){return [...new Set(DATA.filter(r=>r.year&&r.month).map(r=>r.year+'-'+String(r.month).padStart(2,'0')))].sort();}
 function renderPubMonths(){const s=document.getElementById('pubMonth');if(!s)return;s.innerHTML=monthsInData().map(m=>`<option>${m}</option>`).join('')||'<option value="">— no data —</option>';}
 function cleanRec(r){const o={};['userId','userName','department','mobile','invoiceNumber','accountNumber','customer','company','invoiceDate','billingPeriod','year','month','quarter','currentCharges','prevAmountDue','remainingBalance','totalAmountDue','planCharge','deviceCost','deviceTerm','discounts','vat','creditLimit','dueDate','invoiceFolder','invoiceFile','status'].forEach(k=>{if(r[k]!=null&&r[k]!=='')o[k]=r[k];});return o;}
 async function buildMonthFile(mo){
-  if(!ADMIN_PASS){toast('Enter admin password (Settings → Access) first');return null;}
+  const mk=ensureMaster();const cds=ensureCodesForDepts();
   applyUsers(DATA);
   const recs=DATA.filter(r=>(r.year+'-'+String(r.month).padStart(2,'0'))===mo);
   const groups={};recs.forEach(r=>{const d=r.department||'__unassigned__';(groups[d]=groups[d]||[]).push(cleanRec(r));});
@@ -1139,15 +1150,12 @@ async function buildMonthFile(mo){
   for(const d in groups){
     const rawDK=crypto.getRandomValues(new Uint8Array(32));const dk=await importAES(rawDK);
     const enc=await aesEnc(dk,JSON.stringify(groups[d]));
-    const keys={__admin__:await wrapDK(rawDK,ADMIN_PASS)};
-    if(d!=='__unassigned__'&&deptPass(d))keys[d]=await wrapDK(rawDK,deptPass(d));
+    const keys={__admin__:await wrapDK(rawDK,mk)};
+    if(d!=='__unassigned__'&&cds.cur[d])keys[d]=await wrapDK(rawDK,cds.cur[d]);
     depts[d]={iv:enc.iv,ct:enc.ct,keys};
   }
   return {month:mo,generated:new Date().toISOString(),depts};
 }
-document.getElementById('btnPubMonth').onclick=async()=>{const mo=document.getElementById('pubMonth').value;if(!mo)return;const f=await buildMonthFile(mo);if(!f)return;download(mo+'.json',JSON.stringify(f),'application/json');document.getElementById('pubStatus').textContent='Exported '+mo+'.json — move it into <repo>/data/ and commit.';};
-document.getElementById('btnPubAll').onclick=async()=>{const ms=monthsInData();if(!ms.length)return;for(const mo of ms){const f=await buildMonthFile(mo);if(f){download(mo+'.json',JSON.stringify(f),'application/json');await new Promise(r=>setTimeout(r,400));}}exportIndexFile();document.getElementById('pubStatus').textContent='Exported '+ms.length+' month files + index.json.';};
-document.getElementById('btnPubIndex').onclick=()=>exportIndexFile();
 function exportIndexFile(){const file={generated:new Date().toISOString(),months:monthsInData(),departments};download('index.json',JSON.stringify(file,null,2),'application/json');document.getElementById('pubStatus').textContent='Exported index.json — commit it to <repo>/data/.';}
 
 /* ============================ One-click GitHub Sync ============================ */
@@ -1185,7 +1193,6 @@ async function syncNow(){
   toast(failed?`Sync: ${done} ok, ${failed} failed`:`Synced ${done} files to GitHub`);
 }
 document.getElementById('btnGhSync').onclick=syncNow;
-document.getElementById('btnTopSync').onclick=syncNow;
 
 /* ============================ Boot ============================ */
 async function refreshViewsOnly(){renderViews();}
@@ -1194,8 +1201,8 @@ async function refreshViewsOnly(){renderViews();}
   try{await loadLib('chart');}catch(e){}
   initAuthUI();
   const sess=JSON.parse(sessionStorage.getItem('sbms_session')||'null');
-  if(sess&&sess.role==='admin'){ADMIN_PASS=sess.ap||null;await enterAdmin();}
-  else if(sess&&sess.role&&sess.pass){try{const recs=await loadPublished(sess.role,sess.pass);if(recs.length){enterViewer(sess.role,recs,sess.pass);}else showLogin();}catch(e){showLogin();}}
+  if(master()){await enterAdmin();}  // admin device — auto sign-in
+  else if(sess&&sess.role&&sess.role!=='admin'&&sess.pass){try{const recs=await loadPublished(sess.role,sess.pass);if(recs.length){enterViewer(sess.role,recs,sess.pass);}else showLogin();}catch(e){showLogin();}}
   else showLogin();
 })();
 </script>
