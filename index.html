@@ -1,0 +1,1203 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="ocean" data-mode="dark">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Smart Billing Management System — Enterprise Edition</title>
+<style>
+:root{--radius:16px;--radius-sm:10px;--sidebar-w:250px;
+ --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+ --transition:.22s cubic-bezier(.4,0,.2,1);--grid-density:8px;}
+[data-theme="ocean"]{--accent:#2f8fff;--accent2:#00d4ff;}
+[data-theme="royal"]{--accent:#3a56ff;--accent2:#6b8cff;}
+[data-theme="emerald"]{--accent:#10b981;--accent2:#34e0a1;}
+[data-theme="forest"]{--accent:#2f9e44;--accent2:#94d82d;}
+[data-theme="cyber"]{--accent:#00ffa3;--accent2:#00e5ff;}
+[data-theme="purple"]{--accent:#8b5cf6;--accent2:#c084fc;}
+[data-theme="midnight"]{--accent:#5b6cff;--accent2:#8ea2ff;}
+[data-theme="arctic"]{--accent:#38bdf8;--accent2:#a5f3fc;}
+[data-theme="crimson"]{--accent:#ef4444;--accent2:#ff7a7a;}
+[data-theme="ruby"]{--accent:#e11d48;--accent2:#fb7185;}
+[data-theme="sunset"]{--accent:#ff6b6b;--accent2:#ffd166;}
+[data-theme="orange"]{--accent:#ff8c00;--accent2:#ffb347;}
+[data-theme="amber"]{--accent:#f59e0b;--accent2:#fcd34d;}
+[data-theme="gold"]{--accent:#d4af37;--accent2:#f0d97d;}
+[data-theme="rose"]{--accent:#f43f8e;--accent2:#fda4d0;}
+[data-theme="sakura"]{--accent:#ff8fb1;--accent2:#ffd1e0;}
+[data-theme="mint"]{--accent:#2dd4bf;--accent2:#99f6e4;}
+[data-theme="teal"]{--accent:#14b8a6;--accent2:#5eead4;}
+[data-theme="graphite"]{--accent:#94a3b8;--accent2:#cbd5e1;}
+[data-theme="pureblack"]{--accent:#e5e5e5;--accent2:#ffffff;}
+[data-mode="dark"]{--bg:#0b1020;--bg2:#0e1428;--panel:rgba(255,255,255,.045);--panel-solid:#141b30;
+ --border:rgba(255,255,255,.09);--text:#eaf0ff;--muted:#9aa6c4;--muted2:#6b7796;--glass:rgba(20,27,48,.6);
+ --shadow:0 10px 40px rgba(0,0,0,.45);--grid-head:#18233f;--row-alt:rgba(255,255,255,.025);--hover:rgba(255,255,255,.06);}
+[data-mode="light"]{--bg:#eef2fb;--bg2:#e6ecf8;--panel:rgba(255,255,255,.75);--panel-solid:#ffffff;
+ --border:rgba(15,30,70,.12);--text:#0e1730;--muted:#5a6b8c;--muted2:#8391ad;--glass:rgba(255,255,255,.7);
+ --shadow:0 10px 30px rgba(30,50,110,.12);--grid-head:#eef2fb;--row-alt:rgba(20,40,90,.03);--hover:rgba(20,40,90,.05);}
+[data-mode="oled"]{--bg:#000;--bg2:#000;--panel:rgba(255,255,255,.04);--panel-solid:#0a0a0a;
+ --border:rgba(255,255,255,.1);--text:#f2f2f2;--muted:#9aa;--muted2:#667;--glass:rgba(8,8,8,.7);
+ --shadow:0 10px 40px rgba(0,0,0,.7);--grid-head:#0d0d0d;--row-alt:rgba(255,255,255,.02);--hover:rgba(255,255,255,.06);}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:var(--font);color:var(--text);overflow:hidden;
+ background:radial-gradient(1200px 600px at 10% -10%,color-mix(in srgb,var(--accent) 22%,transparent),transparent 60%),
+ radial-gradient(1000px 500px at 110% 10%,color-mix(in srgb,var(--accent2) 16%,transparent),transparent 55%),
+ linear-gradient(160deg,var(--bg),var(--bg2));transition:background var(--transition);}
+button,input,select{font-family:inherit;color:inherit}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:color-mix(in srgb,var(--accent) 40%,transparent);border-radius:20px}
+.app{display:grid;grid-template-columns:var(--sidebar-w) 1fr;height:100vh}
+.sidebar{background:var(--glass);backdrop-filter:blur(22px) saturate(160%);border-right:1px solid var(--border);
+ display:flex;flex-direction:column;padding:18px 12px;gap:4px;overflow-y:auto}
+.brand{display:flex;align-items:center;gap:11px;padding:6px 10px 16px}
+.brand .logo{width:38px;height:38px;border-radius:11px;flex:0 0 auto;background:linear-gradient(135deg,var(--accent),var(--accent2));
+ display:grid;place-items:center;font-weight:800;color:#fff;font-size:18px;box-shadow:0 6px 18px color-mix(in srgb,var(--accent) 45%,transparent)}
+.brand b{font-size:15px;letter-spacing:.2px;line-height:1.1}.brand small{color:var(--muted);font-size:11px}
+.nav-group{color:var(--muted2);font-size:10.5px;text-transform:uppercase;letter-spacing:1.4px;padding:12px 12px 5px}
+.nav a{display:flex;align-items:center;gap:11px;padding:9px 12px;border-radius:11px;color:var(--muted);cursor:pointer;
+ font-size:13.5px;font-weight:500;text-decoration:none;transition:var(--transition);position:relative}
+.nav a .ic{width:18px;text-align:center;font-size:15px;opacity:.9}
+.nav a:hover{background:var(--hover);color:var(--text)}
+.nav a.active{background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 28%,transparent),color-mix(in srgb,var(--accent2) 18%,transparent));
+ color:var(--text);box-shadow:inset 0 0 0 1px var(--border)}
+.nav a.active::before{content:"";position:absolute;left:-12px;top:20%;height:60%;width:4px;border-radius:4px;background:linear-gradient(var(--accent),var(--accent2))}
+.nav a .badge{margin-left:auto;background:var(--accent);color:#fff;font-size:10px;padding:1px 7px;border-radius:20px;font-weight:700}
+.main{display:flex;flex-direction:column;min-width:0;overflow:hidden}
+.topbar{display:flex;align-items:center;gap:14px;padding:14px 22px;border-bottom:1px solid var(--border);background:var(--glass);backdrop-filter:blur(14px)}
+.topbar h1{font-size:17px;font-weight:700}.topbar .sub{color:var(--muted);font-size:12px;margin-top:1px}
+.search{margin-left:auto;display:flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:8px 13px;min-width:280px}
+.search input{background:none;border:none;outline:none;width:100%;font-size:13px}
+.btn{border:1px solid var(--border);background:var(--panel);color:var(--text);padding:9px 15px;border-radius:11px;cursor:pointer;
+ font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:8px;transition:var(--transition);white-space:nowrap}
+.btn:hover{background:var(--hover);transform:translateY(-1px)}
+.btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:none;box-shadow:0 6px 18px color-mix(in srgb,var(--accent) 40%,transparent)}
+.btn.ghost{background:transparent}.btn.sm{padding:6px 10px;font-size:12px;border-radius:9px}
+.btn.danger{color:#fff;background:linear-gradient(135deg,#ef4444,#f87171);border:none}
+.content{padding:22px;overflow-y:auto;flex:1}
+.view{display:none;animation:fade .3s ease}.view.active{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:15px}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:17px 18px;backdrop-filter:blur(14px);
+ box-shadow:var(--shadow);transition:var(--transition);position:relative;overflow:hidden}
+.card:hover{transform:translateY(-3px);border-color:color-mix(in srgb,var(--accent) 40%,var(--border))}
+.card .k{color:var(--muted);font-size:12px;font-weight:600;display:flex;align-items:center;gap:8px}
+.card .v{font-size:26px;font-weight:800;margin-top:9px;letter-spacing:-.5px}
+.card .d{font-size:11.5px;color:var(--muted2);margin-top:6px}
+.card .chip{position:absolute;top:14px;right:14px;font-size:15px;opacity:.5}
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:18px;backdrop-filter:blur(14px);box-shadow:var(--shadow);margin-top:16px}
+.panel h3{font-size:14px;margin-bottom:4px;display:flex;align-items:center;gap:9px}
+.panel .hint{color:var(--muted);font-size:12px;margin-bottom:12px}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}.spacer{flex:1}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:1100px){.grid2{grid-template-columns:1fr}}
+.drop{border:2px dashed color-mix(in srgb,var(--accent) 45%,var(--border));border-radius:var(--radius);padding:44px;text-align:center;background:var(--panel);transition:var(--transition);cursor:pointer}
+.drop:hover,.drop.hot{background:var(--hover);border-color:var(--accent)}.drop .big{font-size:40px;margin-bottom:10px}
+.progress-wrap{margin-top:16px;display:none}
+.progress{height:12px;background:var(--panel);border-radius:20px;overflow:hidden;border:1px solid var(--border)}
+.progress .bar{height:100%;width:0%;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .15s;border-radius:20px}
+.stats-line{display:flex;gap:18px;flex-wrap:wrap;margin-top:12px;font-size:12.5px;color:var(--muted)}.stats-line b{color:var(--text)}
+.log{margin-top:12px;max-height:180px;overflow:auto;font:12px/1.5 ui-monospace,Menlo,monospace;background:rgba(0,0,0,.15);border-radius:10px;padding:10px;border:1px solid var(--border)}
+.log .err{color:#ff8080}.log .ok{color:#5ee6a0}.log .warn{color:#ffce6a}
+.tablewrap{overflow:auto;border:1px solid var(--border);border-radius:var(--radius);background:var(--panel-solid)}
+table{border-collapse:collapse;width:100%;font-size:12.5px;white-space:nowrap}
+thead th{position:sticky;top:0;background:var(--grid-head);text-align:left;padding:calc(var(--grid-density)) 12px;font-weight:700;color:var(--muted);
+ border-bottom:1px solid var(--border);cursor:pointer;user-select:none;z-index:2}
+thead th:hover{color:var(--text)}
+thead th.asc::after{content:" ↑";color:var(--accent)}thead th.desc::after{content:" ↓";color:var(--accent)}
+thead th.drag{outline:2px dashed var(--accent);outline-offset:-2px}
+tbody td{padding:calc(var(--grid-density)) 12px;border-bottom:1px solid var(--border)}
+tbody tr:nth-child(even){background:var(--row-alt)}tbody tr:hover{background:var(--hover)}
+tbody tr.clickable{cursor:pointer}tbody tr.sel{background:color-mix(in srgb,var(--accent) 20%,transparent)}
+td.num{text-align:right;font-variant-numeric:tabular-nums}
+.tag{padding:2px 9px;border-radius:20px;font-size:10.5px;font-weight:700;display:inline-block}
+.tag.new{background:rgba(46,204,113,.18);color:#59e39b}.tag.dup{background:rgba(241,196,15,.18);color:#ffce6a}
+.chip-dept{padding:1px 8px;border-radius:20px;font-size:10.5px;font-weight:700;background:color-mix(in srgb,var(--accent) 20%,transparent);color:var(--text)}
+.pager{display:flex;gap:8px;align-items:center;justify-content:flex-end;margin-top:12px;font-size:12.5px;color:var(--muted)}
+select.inp,input.inp{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:8px 11px;font-size:12.5px;outline:none}
+input.inp:focus,select.inp:focus{border-color:var(--accent)}
+label.fld{display:flex;flex-direction:column;gap:5px;font-size:11.5px;color:var(--muted)}
+.previewgrid{display:grid;grid-template-columns:1.15fr .85fr;gap:16px}
+@media(max-width:1000px){.previewgrid{grid-template-columns:1fr}}
+.pdfview{width:100%;height:74vh;overflow:auto;border:1px solid var(--border);border-radius:12px;background:#222;padding:10px;display:flex;flex-direction:column;align-items:center;gap:8px}
+.pdfview canvas{width:100%;max-width:640px;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.4)}
+.pdfview .msg{color:#999;text-align:center;margin:auto;font-size:13px;line-height:1.6}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:7px 14px;font-size:13px}
+.kv .kk{color:var(--muted)}.kv .vv{font-weight:600;text-align:right}
+.list-invoices{max-height:40vh;overflow:auto;display:flex;flex-direction:column;gap:6px}
+.inv-item{padding:10px 12px;border:1px solid var(--border);border-radius:11px;cursor:pointer;background:var(--panel);transition:var(--transition)}
+.inv-item:hover{background:var(--hover)}.inv-item.active{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 14%,transparent)}
+.inv-item .t{font-weight:700;font-size:13px}.inv-item .s{font-size:11.5px;color:var(--muted);margin-top:2px}
+.swatches{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:10px}
+.sw{border:1px solid var(--border);border-radius:12px;padding:10px;cursor:pointer;text-align:center;font-size:11px;transition:var(--transition)}
+.sw:hover{transform:translateY(-2px)}.sw.active{box-shadow:0 0 0 2px var(--accent)}.sw .dot{height:26px;border-radius:8px;margin-bottom:7px}
+.toggle{display:inline-flex;background:var(--panel);border:1px solid var(--border);border-radius:11px;overflow:hidden}
+.toggle button{background:none;border:none;padding:8px 14px;cursor:pointer;color:var(--muted);font-size:12.5px;font-weight:600}
+.toggle button.on{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff}
+.empty{text-align:center;color:var(--muted);padding:50px 20px}.empty .big{font-size:46px;opacity:.5;margin-bottom:12px}
+.toast{position:fixed;bottom:22px;right:22px;background:var(--panel-solid);border:1px solid var(--border);border-radius:12px;padding:13px 17px;box-shadow:var(--shadow);font-size:13px;z-index:120;opacity:0;transform:translateY(10px);transition:var(--transition)}
+.toast.show{opacity:1;transform:none}
+.chartbox{position:relative;height:320px}.mini{font-size:11.5px;color:var(--muted)}canvas{max-width:100%}
+kbd{background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:1px 6px;font-size:11px}
+.pill{display:inline-flex;align-items:center;gap:6px;background:var(--panel);border:1px solid var(--border);border-radius:20px;padding:4px 10px;font-size:12px;margin:3px}
+.pill button{background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px}
+/* modal */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:100}
+.overlay.show{display:flex}
+.modal{width:min(720px,94vw);max-height:90vh;overflow:auto;background:var(--panel-solid);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:22px}
+.modal h3{font-size:16px;margin-bottom:2px}.modal .sub{color:var(--muted);font-size:12px;margin-bottom:16px}
+.formgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:640px){.formgrid{grid-template-columns:1fr}}
+.formgrid label{display:flex;flex-direction:column;gap:5px;font-size:11.5px;color:var(--muted)}
+.formgrid input,.formgrid select{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:9px 11px;font-size:13px;outline:none;color:var(--text)}
+.formgrid input:focus,.formgrid select:focus{border-color:var(--accent)}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:18px}
+.sectionlabel{grid-column:1/-1;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted2);margin-top:6px}
+/* login + roles */
+body.viewer .adminOnly{display:none!important}
+.login-overlay{position:fixed;inset:0;z-index:200;display:none;align-items:center;justify-content:center;
+  background:radial-gradient(1000px 600px at 20% -10%,color-mix(in srgb,var(--accent) 30%,transparent),transparent 60%),linear-gradient(160deg,var(--bg),var(--bg2))}
+.login-overlay.show{display:flex}
+.login-card{width:min(420px,92vw);background:var(--panel-solid);border:1px solid var(--border);border-radius:20px;box-shadow:var(--shadow);padding:30px}
+.login-card .logo{width:52px;height:52px;border-radius:14px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:grid;place-items:center;font-weight:800;color:#fff;font-size:24px;margin-bottom:16px}
+.login-card h2{font-size:20px;margin-bottom:3px}.login-card p{color:var(--muted);font-size:12.5px;margin-bottom:18px}
+.login-card label{display:block;font-size:11.5px;color:var(--muted);margin:12px 0 5px}
+.login-card select,.login-card input{width:100%;background:var(--panel);border:1px solid var(--border);border-radius:11px;padding:11px 13px;font-size:14px;outline:none;color:var(--text)}
+.login-card select:focus,.login-card input:focus{border-color:var(--accent)}
+.login-card .err{color:#ff8080;font-size:12px;margin-top:10px;min-height:16px}
+.login-card .note{color:var(--muted2);font-size:11.5px;margin-top:14px;line-height:1.5}
+.badge-role{display:inline-flex;align-items:center;gap:6px;background:var(--panel);border:1px solid var(--border);border-radius:20px;padding:4px 11px;font-size:12px;font-weight:600}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand"><div class="logo">S</div><div><b>Smart Billing</b><br><small>Enterprise Edition</small></div></div>
+    <nav class="nav" id="nav">
+      <div class="nav-group">Monitor</div>
+      <a data-view="dashboard" class="active"><span class="ic">▦</span> Dashboard</a>
+      <a data-view="import" class="adminOnly"><span class="ic">⤓</span> Import PDFs</a>
+      <a data-view="grid"><span class="ic">▤</span> Data Grid <span class="badge" id="navCount">0</span></a>
+      <a data-view="preview" class="adminOnly"><span class="ic">◈</span> Billing Preview</a>
+      <div class="nav-group">Insights</div>
+      <a data-view="reports"><span class="ic">▣</span> Reports</a>
+      <a data-view="analytics"><span class="ic">◔</span> Analytics</a>
+      <a data-view="phones"><span class="ic">☎</span> Phone Numbers</a>
+      <a data-view="charts"><span class="ic">◑</span> Charts</a>
+      <div class="nav-group">System</div>
+      <a data-view="settings"><span class="ic">⚙</span> Settings &amp; Appearance</a>
+      <a data-view="backup" class="adminOnly"><span class="ic">⛃</span> Backup, Restore &amp; Publish</a>
+      <a data-view="about"><span class="ic">ⓘ</span> Help &amp; About</a>
+    </nav>
+    <div class="spacer" style="flex:1"></div>
+    <div style="padding:8px 12px"><span class="badge-role" id="roleBadge">—</span> <a id="logoutBtn" style="cursor:pointer;color:var(--muted);font-size:12px;margin-left:6px">Sign out</a></div>
+    <div class="mini" style="padding:2px 12px 10px">Local · Offline · No server<br><span id="dbInfo">IndexedDB ready</span></div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <div><h1 id="viewTitle">Dashboard</h1><div class="sub" id="viewSub">Overview of all Smart billing data</div></div>
+      <div class="search"><span>🔍</span><input id="globalSearch" placeholder="Search phone, invoice #, user, month, amount…" /></div>
+      <button class="btn adminOnly" id="btnTopSync" title="Push encrypted data to GitHub"><span>🔄</span> Sync</button>
+      <button class="btn primary adminOnly" id="btnQuickImport"><span>⤓</span> Import Folder</button>
+    </div>
+
+    <div class="content">
+      <!-- DASHBOARD -->
+      <section class="view active" id="v-dashboard">
+        <div class="cards" id="dashCards"></div>
+        <div class="grid2">
+          <div class="panel"><h3>◑ Monthly Total Amount Due</h3><div class="hint">Sum of total amount due per billing month</div><div class="chartbox"><canvas id="dashChartMonthly"></canvas></div></div>
+          <div class="panel"><h3>◐ Top 8 Users by Lifetime Charges</h3><div class="hint">Highest total current charges</div><div class="chartbox"><canvas id="dashChartTop"></canvas></div></div>
+        </div>
+      </section>
+
+      <!-- IMPORT -->
+      <section class="view" id="v-import">
+        <div class="panel">
+          <h3>⤓ Import Smart Billing Invoices</h3>
+          <div class="hint">Select your <b>3. Smart Billing Invoices</b> folder. Every sub-folder is scanned recursively, each PDF is read in-browser, and billing data is extracted automatically. Handles all Smart layouts (old &amp; the new May-2026 unified invoice).</div>
+          <div class="row" style="margin-bottom:14px">
+            <button class="btn primary" id="btnPickFolder"><span>📁</span> Select Folder</button>
+            <button class="btn" id="btnPickFS" title="File System Access API (rename/delete)"><span>🗂️</span> Select Folder (advanced)</button>
+            <div class="spacer"></div>
+            <select class="inp" id="dupMode" title="Duplicate handling">
+              <option value="merge">Duplicates: Merge / update (recommended)</option><option value="keepboth">Duplicates: Keep both</option>
+            </select>
+          </div>
+          <div class="drop" id="dropzone"><div class="big">📥</div><div><b>Drop a folder here</b> or click <b>Select Folder</b></div>
+            <div class="mini" style="margin-top:6px">Reads *.pdf recursively · User names/departments auto-linked from your mapping</div></div>
+          <input type="file" id="folderInput" webkitdirectory directory multiple accept="application/pdf" style="display:none" />
+          <div class="progress-wrap" id="progWrap">
+            <div class="progress"><div class="bar" id="progBar"></div></div>
+            <div class="stats-line">
+              <div>Files found: <b id="stFound">0</b></div><div>Parsed: <b id="stParsed">0</b></div>
+              <div>New: <b id="stNew">0</b></div><div>Duplicates: <b id="stDup">0</b></div>
+              <div>Image/skipped: <b id="stImg">0</b></div><div>Errors: <b id="stErr">0</b></div>
+              <div>Elapsed: <b id="stElapsed">0s</b></div><div>ETA: <b id="stEta">—</b></div>
+            </div>
+            <div class="log" id="importLog"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- DATA GRID -->
+      <section class="view" id="v-grid">
+        <div class="panel">
+          <div class="row" style="margin-bottom:12px">
+            <select class="inp" id="fltYear"><option value="">All Years</option></select>
+            <select class="inp" id="fltMonth"><option value="">All Months</option></select>
+            <select class="inp" id="fltQuarter"><option value="">All Quarters</option></select>
+            <select class="inp" id="fltDept"><option value="">All Depts</option></select>
+            <select class="inp" id="fltPhone"><option value="">All Phone #</option></select>
+            <input class="inp" id="fltSearch" placeholder="Filter…" style="min-width:150px" />
+            <div class="spacer"></div>
+            <button class="btn sm adminOnly" id="btnAddRow">＋ Add</button>
+            <button class="btn sm" id="btnExportXlsx">⬇ Excel</button>
+            <button class="btn sm" id="btnResetCols" title="Reset column order">↺ Cols</button>
+          </div>
+          <div class="tablewrap" style="max-height:64vh"><table id="grid"><thead><tr id="gridHead"></tr></thead><tbody id="gridBody"></tbody></table></div>
+          <div class="pager">
+            <span id="gridInfo">0 rows</span><div class="spacer"></div>
+            <button class="btn sm" id="pgFirst">«</button><button class="btn sm" id="pgPrev">‹</button>
+            <span id="pgLabel">1 / 1</span>
+            <button class="btn sm" id="pgNext">›</button><button class="btn sm" id="pgLast">»</button>
+            <select class="inp" id="pgSize"><option>25</option><option selected>50</option><option>100</option><option>250</option></select>
+          </div>
+          <div class="mini" style="margin-top:8px">Click a row to open the edit form. Drag column headers to reorder. Changes save to IndexedDB.</div>
+        </div>
+      </section>
+
+      <!-- PREVIEW -->
+      <section class="view" id="v-preview">
+        <div class="previewgrid">
+          <div class="panel" style="margin-top:0">
+            <h3>◈ Invoice Preview</h3>
+            <div class="hint" id="previewName">Select an invoice from the list →</div>
+            <div class="pdfview" id="pdfView"><div class="msg">Select an invoice to preview its PDF.</div></div>
+            <div class="row" style="margin-top:10px"><button class="btn sm" id="btnOpenPdf">↗ Open in new tab</button></div>
+          </div>
+          <div class="panel" style="margin-top:0">
+            <h3>Extracted Data</h3><div class="hint">Parsed fields for the selected invoice</div>
+            <div class="kv" id="previewKV"><div class="kk">—</div><div class="vv">—</div></div>
+            <h3 style="margin-top:18px">All invoices</h3>
+            <input class="inp" id="previewSearch" placeholder="Search list…" style="width:100%;margin:8px 0"/>
+            <div class="list-invoices" id="previewList"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- REPORTS -->
+      <section class="view" id="v-reports">
+        <div class="panel">
+          <div class="row">
+            <h3 style="margin:0">▣ Reports</h3><div class="spacer"></div>
+            <select class="inp" id="reportDept"><option value="">All Departments</option></select>
+            <select class="inp" id="reportType">
+              <option value="monthly">Monthly Summary</option><option value="quarterly">Quarterly Summary</option>
+              <option value="yearly">Yearly Summary</option><option value="department">Department Summary</option>
+              <option value="phone">Per-Phone Summary</option><option value="grand">Grand Total</option>
+            </select>
+            <button class="btn sm" id="btnReportXlsx">⬇ Excel</button>
+            <button class="btn sm" id="btnReportPrint">🖨 Print</button>
+          </div>
+          <div id="reportOut" style="margin-top:14px"></div>
+        </div>
+      </section>
+
+      <!-- ANALYTICS -->
+      <section class="view" id="v-analytics">
+        <div class="cards" id="anaCards"></div>
+        <div class="grid2">
+          <div class="panel"><h3>Top 10 Highest Invoices</h3><div id="anaTopHigh"></div></div>
+          <div class="panel"><h3>Top 10 Users by Lifetime Charges</h3><div id="anaTopNum"></div></div>
+        </div>
+        <div class="panel"><h3>Spend by Department</h3><div class="hint">Total amount due grouped by department</div><div class="chartbox"><canvas id="anaChartDept"></canvas></div></div>
+      </section>
+
+      <!-- PHONES -->
+      <section class="view" id="v-phones">
+        <div class="panel">
+          <div class="row"><h3 style="margin:0">☎ Phone Numbers</h3><div class="spacer"></div><input class="inp" id="phoneSearch" placeholder="Search number / user / dept…"/></div>
+          <div class="hint">Table 1 — lifetime totals per line. Click a row to load its full billing history below.</div>
+          <div class="tablewrap" style="max-height:42vh;margin-top:8px">
+            <table><thead><tr>
+              <th>Mobile #</th><th>User</th><th>Dept</th><th>Invoices</th><th>Lifetime Charges</th><th>Total Amount Due</th><th>Avg Bill</th><th>Highest</th><th>Lowest</th>
+            </tr></thead><tbody id="phonesBody"></tbody></table>
+          </div>
+        </div>
+        <div class="panel">
+          <h3>📄 Invoices for <span id="phoneSelLabel" style="color:var(--accent)">— select a number above —</span></h3>
+          <div class="tablewrap" style="max-height:42vh;margin-top:8px">
+            <table><thead><tr>
+              <th>Invoice Date</th><th>Invoice #</th><th>Account #</th><th>Current</th><th>Prev Bal</th><th>Amount Due</th><th>Plan</th><th>Device</th><th>VAT</th><th>Due Date</th><th>Folder</th>
+            </tr></thead><tbody id="phoneDetailBody"><tr><td colspan="11"><div class="empty">Select a phone number above.</div></td></tr></tbody></table>
+          </div>
+        </div>
+      </section>
+
+      <!-- CHARTS -->
+      <section class="view" id="v-charts">
+        <div class="grid2">
+          <div class="panel"><h3>Monthly Trend (Line)</h3><div class="chartbox"><canvas id="cLine"></canvas></div></div>
+          <div class="panel"><h3>Quarterly Totals (Bar)</h3><div class="chartbox"><canvas id="cBar"></canvas></div></div>
+          <div class="panel"><h3>Charge Composition (Doughnut)</h3><div class="hint">Plan vs Device vs VAT vs Discounts</div><div class="chartbox"><canvas id="cDon"></canvas></div></div>
+          <div class="panel"><h3>Yearly Comparison (Bar)</h3><div class="chartbox"><canvas id="cYear"></canvas></div></div>
+        </div>
+      </section>
+
+      <!-- SETTINGS -->
+      <section class="view" id="v-settings">
+        <div class="panel">
+          <h3>🎨 Appearance</h3><div class="hint">Choose a theme and mode. Saved automatically.</div>
+          <div class="row" style="margin:8px 0 16px">
+            <span class="mini">Mode:</span>
+            <div class="toggle" id="modeToggle"><button data-mode="light">☀ Light</button><button data-mode="dark" class="on">🌙 Dark</button><button data-mode="oled">⬛ OLED</button></div>
+            <span class="spacer"></span>
+            <label class="fld" style="flex-direction:row;align-items:center;gap:8px"><span>Grid density</span>
+              <select class="inp" id="setDensity"><option value="6px">Compact</option><option value="8px" selected>Default</option><option value="12px">Comfortable</option></select></label>
+          </div>
+          <div class="swatches" id="swatches"></div>
+        </div>
+
+        <div class="panel adminOnly">
+          <h3>🔐 Access &amp; Passwords</h3>
+          <div class="hint">Set the Administrator password and one password per department. Department viewers use these to sign in and decrypt <b>only their own</b> data. Passwords are stored on this admin machine only (never in the repo) so publishing can encrypt with them.</div>
+          <div class="grid2" style="margin-top:6px">
+            <label class="fld">Administrator password<input class="inp" id="pwAdmin" type="password" placeholder="set / change admin password"></label>
+            <label class="fld">Confirm admin password<input class="inp" id="pwAdmin2" type="password" placeholder="repeat"></label>
+          </div>
+          <div class="sectionlabel" style="margin:12px 0 6px;color:var(--muted2)">Department passwords</div>
+          <div id="deptPw" class="grid2"></div>
+          <div class="row" style="margin-top:12px"><button class="btn sm primary" id="btnSaveAuth">💾 Save passwords</button><span class="mini" id="authStatus"></span></div>
+        </div>
+
+        <div class="panel adminOnly">
+          <h3>🏢 Departments</h3><div class="hint">Add or remove department types. Used across Reports, Data Grid, Phone Numbers &amp; Billing Preview.</div>
+          <div id="deptPills" style="margin-bottom:10px"></div>
+          <div class="row"><input class="inp" id="newDept" placeholder="New department name" style="min-width:200px"><button class="btn sm primary" id="btnAddDept">＋ Add Department</button></div>
+        </div>
+
+        <div class="panel adminOnly">
+          <h3>👤 Users — link phone → User ID / Name / Department</h3>
+          <div class="hint">Linked info shows in Reports, Phone Numbers, Data Grid and Billing Preview. Seeded from your Excel mapping; edit anytime. You can also import an Excel with columns like MIN/Phone, User Name/Name, WWID/User ID, Department.</div>
+          <div class="row" style="margin-bottom:10px">
+            <input class="inp" id="userSearch" placeholder="Search phone / name / id / dept…" style="min-width:220px">
+            <div class="spacer"></div>
+            <button class="btn sm" id="btnImportMap">⬆ Import mapping (Excel)</button>
+            <input type="file" id="mapInput" accept=".xlsx,.xls,.csv" style="display:none">
+            <button class="btn sm" id="btnAddUser">＋ Add link</button>
+          </div>
+          <div class="tablewrap" style="max-height:46vh"><table><thead><tr><th>Mobile #</th><th>User Name</th><th>User ID (WWID)</th><th>Department</th><th></th></tr></thead><tbody id="usersBody"></tbody></table></div>
+          <div class="mini" style="margin-top:8px">Tip: type a phone that exists in your imported data to link it. Changes apply instantly everywhere.</div>
+        </div>
+
+        <div class="panel">
+          <h3>⚙ Preferences</h3>
+          <div class="grid2" style="margin-top:6px">
+            <label class="fld">Currency symbol<input class="inp" id="setCurrency" value="₱"></label>
+            <label class="fld">Date format<select class="inp" id="setDateFmt"><option>MMM DD, YYYY</option><option>YYYY-MM-DD</option></select></label>
+          </div>
+        </div>
+      </section>
+
+      <!-- BACKUP -->
+      <section class="view" id="v-backup">
+        <div class="panel">
+          <h3>⛃ Backup &amp; Restore</h3>
+          <div class="hint">Export your parsed database + user mapping + departments to a JSON file, or restore from one. PDFs stay in your folder.</div>
+          <div class="row" style="margin-top:8px">
+            <button class="btn primary" id="btnBackup">⬇ Export Backup (JSON)</button>
+            <button class="btn" id="btnRestore">⬆ Restore from JSON</button>
+            <button class="btn" id="btnRebuild" title="Collapse duplicates: keep the best record per phone per billing month">🧹 Rebuild &amp; de-duplicate</button>
+            <input type="file" id="restoreInput" accept="application/json" style="display:none">
+            <div class="spacer"></div>
+            <button class="btn danger" id="btnWipe">🗑 Clear All Invoice Data</button>
+          </div>
+          <div class="mini" style="margin-top:12px" id="backupInfo"></div>
+        </div>
+        <div class="panel">
+          <h3>🚀 Publish encrypted data (for the private GitHub repo)</h3>
+          <div class="hint">Generates <b>encrypted monthly files</b> + a manifest. Each month is split per department and encrypted so a department password decrypts only its own slice (the admin password decrypts everything). Commit these into your repo's <kbd>data/</kbd> folder. Set passwords first in <b>Settings → Access &amp; Passwords</b>.</div>
+          <div class="row" style="margin-bottom:8px">
+            <label class="fld" style="flex-direction:row;align-items:center;gap:8px"><span>Month</span>
+              <select class="inp" id="pubMonth"></select></label>
+            <button class="btn sm primary" id="btnPubMonth">⬇ Export this month (.json)</button>
+            <button class="btn sm" id="btnPubAll">⬇ Export ALL months</button>
+            <button class="btn sm" id="btnPubIndex">⬇ Export manifest (index.json)</button>
+          </div>
+          <div class="mini" id="pubStatus" style="line-height:1.6"></div>
+          <div class="mini" style="margin-top:8px;color:var(--muted2)">Files download to your Downloads folder. Move them into <kbd>&lt;repo&gt;/data/</kbd>, then commit &amp; push (GitHub Desktop → drag files → Commit). Unassigned numbers export in an admin-only slice — assign departments first so viewers can see them.</div>
+        </div>
+        <div class="panel">
+          <h3>🔄 One-click Sync to private GitHub repo</h3>
+          <div class="hint">Pushes the encrypted files straight to your repo — no manual commit. Create a <b>fine-grained Personal Access Token</b> (GitHub → Settings → Developer settings → Fine-grained tokens) scoped to <b>only this repo</b> with <b>Contents: Read and write</b>, then paste it below. Stored on this machine only.</div>
+          <div class="grid2" style="margin-top:6px">
+            <label class="fld">Owner (user or org)<input class="inp" id="ghOwner" placeholder="e.g. r3u-tech"></label>
+            <label class="fld">Repository<input class="inp" id="ghRepo" placeholder="e.g. smart-billing"></label>
+            <label class="fld">Branch<input class="inp" id="ghBranch" placeholder="main"></label>
+            <label class="fld">Data folder<input class="inp" id="ghPath" placeholder="data"></label>
+            <label class="fld" style="grid-column:1/-1">Personal Access Token<input class="inp" id="ghToken" type="password" placeholder="github_pat_…"></label>
+          </div>
+          <div class="row" style="margin-top:12px">
+            <button class="btn sm" id="btnGhSave">💾 Save settings</button>
+            <button class="btn sm" id="btnGhTest">🔌 Test connection</button>
+            <div class="spacer"></div>
+            <button class="btn primary" id="btnGhSync">🔄 Sync now</button>
+            <button class="btn sm" id="btnGhClear" title="Remove stored token">🗑 Clear token</button>
+          </div>
+          <div class="mini" id="ghStatus" style="margin-top:12px;line-height:1.6"></div>
+        </div>
+      </section>
+
+      <!-- ABOUT -->
+      <section class="view" id="v-about">
+        <div class="panel">
+          <h3>ⓘ How it works</h3>
+          <div class="hint" style="line-height:1.7">
+            Drop your Smart PDFs in <kbd>3. Smart Billing Invoices</kbd> (year → month → number), open this app, go to
+            <b>Import PDFs → Select Folder</b>. It parses every PDF (all Smart layouts, old &amp; new), auto-links each line to the
+            User ID / Name / Department from your mapping, and stores everything locally in IndexedDB.<br><br>
+            Explore in Dashboard, Data Grid, Billing Preview, Reports, Analytics, Charts. Manage users &amp; departments in Settings.
+          </div>
+          <h3 style="margin-top:16px">Opening the app</h3>
+          <div class="mini" style="line-height:1.7">Double-click <kbd>index.html</kbd> (works while online). For the most reliable experience run <kbd>START-Smart-Billing.bat</kbd> or host on GitHub Pages — see the README.</div>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT MODAL -->
+<div class="overlay" id="editOverlay">
+  <div class="modal">
+    <h3 id="editTitle">Edit invoice</h3>
+    <div class="sub" id="editSub"></div>
+    <div class="formgrid" id="editForm"></div>
+    <div class="modal-actions">
+      <button class="btn" id="editCancel">Cancel</button>
+      <button class="btn primary" id="editSave">Save changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- LOGIN -->
+<div class="login-overlay" id="loginOverlay">
+  <div class="login-card">
+    <div class="logo">S</div>
+    <h2>Smart Billing</h2>
+    <p id="loginSub">Sign in to continue</p>
+    <label>Sign in as</label>
+    <select id="loginRole"><option value="admin">Administrator (full access)</option></select>
+    <label>Password</label>
+    <input type="password" id="loginPass" placeholder="Enter password" />
+    <div class="err" id="loginErr"></div>
+    <button class="btn primary" id="loginBtn" style="width:100%;justify-content:center;margin-top:14px">Sign in</button>
+    <div class="note" id="loginNote"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- seed user mapping (phone -> {userName,userId}) injected below -->
+<script>window.SEED_USERMAP={};</script>
+<script src="./seed-usermap.js" onerror="void 0"></script>
+<script>
+/* ============================ Library loader ============================ */
+const LIBS={
+  pdf:{local:'./lib/pdf.min.js',cdn:'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js'},
+  pdfw:{local:'./lib/pdf.worker.min.js',cdn:'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'},
+  chart:{local:'./lib/chart.umd.min.js',cdn:'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js'},
+  xlsx:{local:'./lib/xlsx.full.min.js',cdn:'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'},
+};
+function exists(u){return fetch(u,{method:'HEAD'}).then(r=>r.ok).catch(()=>false);}
+function loadScript(src){return new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.onload=()=>res(src);s.onerror=()=>rej(src);document.head.appendChild(s);});}
+async function loadLib(k){const{local,cdn}=LIBS[k];if(await exists(local)){try{await loadScript(local);return;}catch(e){}}await loadScript(cdn);}
+async function workerBlobUrl(){const{local,cdn}=LIBS.pdfw;for(const src of[local,cdn]){try{const r=await fetch(src);if(r.ok){const c=await r.text();return URL.createObjectURL(new Blob([c],{type:'application/javascript'}));}}catch(e){}}return null;}
+let pdfjsReady=false;
+async function ensurePdfjs(){if(pdfjsReady)return;await loadLib('pdf');const wb=await workerBlobUrl();
+  if(wb)window.pdfjsLib.GlobalWorkerOptions.workerSrc=wb;else{window.pdfjsLib.GlobalWorkerOptions.workerSrc=LIBS.pdfw.cdn;toast('If parsing fails, open via START-Smart-Billing.bat (see README).');}
+  pdfjsReady=true;}
+
+/* ============================ IndexedDB ============================ */
+const DB_NAME='SmartBillingDB',STORE='invoices',DB_VER=1;let db;
+function openDB(){return new Promise((res,rej)=>{const r=indexedDB.open(DB_NAME,DB_VER);
+  r.onupgradeneeded=e=>{const d=e.target.result;if(!d.objectStoreNames.contains(STORE)){const os=d.createObjectStore(STORE,{keyPath:'id'});
+    os.createIndex('mobile','mobile',{unique:false});os.createIndex('dupKey','dupKey',{unique:false});}};
+  r.onsuccess=e=>{db=e.target.result;res();};r.onerror=e=>rej(e);});}
+function tx(m){return db.transaction(STORE,m).objectStore(STORE);}
+function dbGetAll(){return new Promise(res=>{const o=[];const rq=tx('readonly').openCursor();rq.onsuccess=e=>{const c=e.target.result;if(c){o.push(c.value);c.continue();}else res(o);};});}
+function dbPut(r){return new Promise((res,rej)=>{const q=tx('readwrite').put(r);q.onsuccess=res;q.onerror=rej;});}
+function dbDel(id){return new Promise((res,rej)=>{const q=tx('readwrite').delete(id);q.onsuccess=res;q.onerror=rej;});}
+function dbClear(){return new Promise((res,rej)=>{const q=tx('readwrite').clear();q.onsuccess=res;q.onerror=rej;});}
+function dbByDup(k){return new Promise(res=>{const o=[];const rq=tx('readonly').index('dupKey').openCursor(IDBKeyRange.only(k));rq.onsuccess=e=>{const c=e.target.result;if(c){o.push(c.value);c.continue();}else res(o);};});}
+
+/* ============================ User map + departments ============================ */
+let userMap=JSON.parse(localStorage.getItem('sbms_usermap')||'null');
+if(!userMap||!Object.keys(userMap).length){userMap=JSON.parse(JSON.stringify(window.SEED_USERMAP||{}));localStorage.setItem('sbms_usermap',JSON.stringify(userMap));}
+function saveUserMap(){localStorage.setItem('sbms_usermap',JSON.stringify(userMap));}
+const DEFAULT_DEPTS=['AR','AP','Finance','Admin','Aftermarket','Services','IT','CPG','Technician'];
+let departments=JSON.parse(localStorage.getItem('sbms_depts')||'null')||DEFAULT_DEPTS.slice();
+function saveDepts(){localStorage.setItem('sbms_depts',JSON.stringify(departments));}
+function userFor(mob){const u=userMap[mob]||{};return{userId:u.userId||'',userName:u.userName||'',department:u.department||''};}
+function setUser(mob,obj){if(!mob)return;const cur=userMap[mob]||{};userMap[mob]={...cur,...obj};saveUserMap();}
+function applyUsers(rows){rows.forEach(r=>{const u=userFor(r.mobile);r.userId=u.userId;r.userName=u.userName;r.department=u.department;});}
+
+/* ============================ Parser (multi-template) ============================ */
+const MONTHS={Jan:1,Feb:2,Mar:3,Apr:4,May:5,Jun:6,Jul:7,Aug:8,Sep:9,Oct:10,Nov:11,Dec:12};
+// Derive {year,month} from a file path/folder like "Billing Statement/June 2026/..." or "Jan2025.pdf"
+function deriveYM(path){if(!path)return{};const p=path.toLowerCase();let year=null,month=null;
+  const m=p.match(/(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s*_?\s*-?\s*(20\d{2})/);
+  if(m){const key=m[1].charAt(0).toUpperCase()+m[1].slice(1);month=MONTHS[key]||null;year=+m[2];}
+  if(!year){const y=p.match(/(20\d{2})/);if(y)year=+y[1];}
+  return{year,month};}
+function stableKeyFor(r){return r.mobile ? (r.mobile+'|'+(r.year||'?')+'-'+String(r.month||'?').padStart(2,'0')) : ('nomob|'+(r.invoiceNumber||r.invoicePath||r.id||Math.random()));}
+function recScore(r){let s=0;['invoiceNumber','invoiceDate','totalAmountDue','currentCharges','vat','planCharge','deviceCost','prevAmountDue','billingPeriod','accountNumber'].forEach(k=>{if(r[k]!=null&&r[k]!=='')s++;});return s;}
+function num(s){if(s==null)return null;let t=String(s).trim();let neg=false;
+  if(/CR\b/i.test(t))neg=true;if(/^\(.*\)$/.test(t.replace(/CR/ig,'').trim()))neg=true;
+  const n=parseFloat(t.replace(/,/g,'').replace(/[^\d.\-]/g,''));if(isNaN(n))return null;return neg?-Math.abs(n):n;}
+function fm(t,re){const m=t.match(re);return m?m[1].trim():null;}
+function quarterOf(m){return m?('Q'+Math.ceil(m/3)):null;}
+function extractCustomer(t){
+  const lines=t.split('\n');const bad=/CUMMINS|SMART|VAT|TIN|BILLING|INVOICE|AVE|LIIP|LAGUNA|BINAN|STREET|PHILIPPINES|MAKATI|SERVE|YOU|WAYS|HAVE|MANY|HOTLINE|CUSTOMER|ENTERPRISE|BALANCE|ACCOUNT|CHARGES|SUMMARY/i;
+  const idx=lines.findIndex(l=>/Customer TIN|CUSTOMER TIN/i.test(l));
+  if(idx>-1)for(let i=idx-1;i>=Math.max(0,idx-6);i--){const c=(lines[i].match(/[A-Z][A-Z]+(?:\s+[A-Z][A-Z.'-]+){1,4}/)||[null])[0];if(c&&!bad.test(c)&&c.trim().length>6)return c.replace(/\s+/g,' ').trim();}
+  for(let i=0;i<Math.min(lines.length,18);i++){const m=lines[i].match(/\b([A-Z][A-Z]+(?:\s+[A-Z][A-Z.'-]+){1,3}(?:\s+(?:JR|SR|III|II|IV))?)\b/);if(m&&!bad.test(m[1])&&m[1].trim().length>7&&!/\d/.test(m[1]))return m[1].replace(/\s+/g,' ').trim();}
+  return null;
+}
+function parseSmart(text){
+  const t=text.replace(/ /g,' ');
+  const invDate=fm(t,/(?:Invoice|Statement)\s*Date\s*:?\s*([A-Z][a-z]{2}\s+\d{1,2},\s*\d{4})/);
+  let year=null,month=null;if(invDate){const m=invDate.match(/([A-Z][a-z]{2})\s+\d{1,2},\s*(\d{4})/);if(m){month=MONTHS[m[1]];year=+m[2];}}
+  let mob=fm(t,/Mobile\s*Number\s*:?\s*(0?9\d{9})/);if(mob&&mob.length===10)mob='0'+mob;
+  const AMT='(\\(?[\\-\\d,]+\\.\\d{2}\\)?\\s*(?:CR)?)';
+  return {
+    invoiceNumber: fm(t,/Invoice\s*Number\s*:?\s*([A-Z0-9]{6,})/) || fm(t,/SOA\s*Number\s*:?\s*(\d{6,})/),
+    accountNumber: fm(t,/Account\s*Number\s*:?\s*(\d{6,})/),
+    mobile: mob, customer: extractCustomer(t),
+    company:(function(){const m=t.match(/(CUMMINS[A-Z .&]*?PHIL[A-Z.]*)/);return m?m[1].replace(/\s+/g,' ').trim():'CUMMINS SALES & SERVICE PHILS.';})(),
+    invoiceDate: invDate, year, month, quarter: quarterOf(month),
+    billingPeriod: fm(t,/Billing\s*Period(?:\s*Covering)?\s*:?\s*([A-Za-z]{3}\s+\d{1,2},\s*\d{4}\s*-\s*[A-Za-z]{3}\s+\d{1,2},\s*\d{4})/),
+    creditLimit: num(fm(t,/Credit\s*Limit\s*:?\s*(?:PhP|PHP)?\s*([\d,]+\.\d{2})/)),
+    prevAmountDue: num(fm(t,new RegExp('Amount Due from Previous (?:Invoice|Bill)\\s+'+AMT))) ?? num(fm(t,new RegExp('Balance from Previous Charges\\s+'+AMT))),
+    remainingBalance: num(fm(t,new RegExp('Remaining Balance from Previous (?:Invoice|Bill)\\s+'+AMT))),
+    discounts: num(fm(t,/Less:\s*Other Discounts\s+([()\-\d,]+\.\d{2})/)),
+    plan: fm(t,/(Smart Enterprise Postpaid Plan\s*\d+)/),
+    planCharge: num(fm(t,/Smart Enterprise Postpaid Plan\s*\d+\s*\([^)]*\)\s+([\d,]+\.\d{2})/)) ?? num(fm(t,/Recurring Charges\s+([\d,]+\.\d{2})/)),
+    deviceCost: num(fm(t,/AMORTIZED DEVICE COST[^\n]*?\d{1,2}\/\d{1,2}\s+([\d,]+\.\d{2})/)) ?? num(fm(t,/Non[- ]?Taxable Charges\s+([\d,]+\.\d{2})/)),
+    deviceTerm: fm(t,/AMORTIZED DEVICE COST[^\n]*?(\d{1,2}\/\d{1,2})/),
+    vat: num(fm(t,/VAT\s*@\s*12%\s+([\d,]+\.\d{2})/)) ?? num(fm(t,/\bVAT\s+([\d,]+\.\d{2})/)),
+    currentCharges: num(fm(t,/Total Current (?:Bill )?Charges\s+([\d,]+\.\d{2})/)),
+    totalAmountDue: num(fm(t,new RegExp('TOTAL AMOUNT DUE\\s*:?\\s*(?:PHP|PhP)?\\s*'+AMT,'i'))) ?? num(fm(t,new RegExp('Total Amount Due\\s*:?\\s*(?:PHP|PhP)?\\s*'+AMT))),
+    dueDate: fm(t,/before\s+([A-Z][a-z]{2}\s+\d{1,2},\s*\d{4})/) || fm(t,/(?:Payment\s*)?Due\s*Date\s*:?\s*([A-Z][a-z]{2}\s+\d{1,2},\s*\d{4})/),
+  };
+}
+
+/* ============================ Import ============================ */
+function logLine(html,cls){const el=document.getElementById('importLog');const d=document.createElement('div');if(cls)d.className=cls;d.innerHTML=html;el.appendChild(d);el.scrollTop=el.scrollHeight;}
+async function extractText(file){
+  const buf=await file.arrayBuffer();const pdf=await window.pdfjsLib.getDocument({data:buf}).promise;
+  let all='';let hadText=false;const max=Math.min(pdf.numPages,10);
+  for(let p=1;p<=max;p++){const page=await pdf.getPage(p);const tc=await page.getTextContent();
+    if(tc.items.length>3)hadText=true;
+    // Feed BOTH a column-aware line reconstruction AND a raw flattened stream, so a
+    // field is still caught if line-grouping splits a label from its value.
+    all+='\n'+reconstruct(tc.items)+'\n'+tc.items.map(it=>it.str).join(' ');
+    if(/Mobile\s*Number/i.test(all) && /(TOTAL AMOUNT DUE|Total Amount Due)/i.test(all) && /Total Current/i.test(all)) break;
+  }
+  return {text:all,hasText:hadText};
+}
+function reconstruct(items){const lines=[];items.forEach(it=>{const y=it.transform[5];const x=it.transform[4];const h=it.height||3;const tol=Math.max(2.5,h*0.6);
+  let l=lines.find(l=>Math.abs(l.y-y)<tol);if(!l){l={y,parts:[]};lines.push(l);}l.parts.push({x,s:it.str});});
+  lines.sort((a,b)=>b.y-a.y);return lines.map(l=>l.parts.sort((a,b)=>a.x-b.x).map(p=>p.s).join(' ').replace(/\s+/g,' ').trim()).join('\n');}
+let importing=false, fileHandles={};
+async function runImport(files){
+  if(importing)return;importing=true;await ensurePdfjs();
+  const dupMode=document.getElementById('dupMode').value;
+  const pdfs=[...files].filter(f=>/\.pdf$/i.test(f.name));
+  document.getElementById('progWrap').style.display='block';document.getElementById('importLog').innerHTML='';
+  const S={found:pdfs.length,parsed:0,neu:0,dup:0,img:0,err:0};document.getElementById('stFound').textContent=S.found;
+  const t0=Date.now();setView('import');
+  for(let i=0;i<pdfs.length;i++){const f=pdfs[i];const rel=(f.webkitRelativePath||f.name);
+    try{
+      const{text,hasText}=await extractText(f);
+      if(!hasText){S.img++;document.getElementById('stImg').textContent=S.img;logLine(`<span class="warn">⤺ image/scanned</span> ${rel} (skipped — needs OCR)`,'warn');}
+      else{
+        const rec=parseSmart(text);
+        if(!rec.mobile){const mm=rel.match(/(09\d{9})/);if(mm)rec.mobile=mm[1];}
+        if(!rec.year||!rec.month){const ym=deriveYM(rel);if(!rec.year)rec.year=ym.year;if(!rec.month)rec.month=ym.month;}
+        if(rec.year&&rec.month)rec.quarter=quarterOf(rec.month);
+        if(!rec.mobile && !rec.invoiceNumber && rec.totalAmountDue==null){S.img++;document.getElementById('stImg').textContent=S.img;logLine(`<span class="warn">∅ no data</span> ${rel} (skipped)`,'warn');}
+        else{
+          rec.invoiceFolder=rel.split('/').slice(0,-1).join('/');rec.invoiceFile=f.name;rec.invoicePath=rel;rec.fileSize=f.size;
+          rec.dateModified=f.lastModified?new Date(f.lastModified).toISOString():null;rec.dateImported=new Date().toISOString();
+          const key=stableKeyFor(rec);rec.stableKey=key;rec.dupKey=key;
+          const ex=await dbByDup(key);
+          if(ex.length){
+            if(dupMode==='keepboth'){rec.id=key+'#'+Date.now();rec.status='dup';await dbPut(rec);S.dup++;document.getElementById('stDup').textContent=S.dup;}
+            else{ // merge/update: keep the record with more data (new parse usually wins)
+              const prev=ex.sort((a,b)=>recScore(b)-recScore(a))[0];rec.id=key;
+              if(recScore(rec)>=recScore(prev)){rec.status='new';await dbPut(rec);logLine(`<span class="ok">↺ updated</span> ${rec.mobile} · ${rec.invoiceDate||rec.year+'-'+rec.month} <span class="mini">${f.name}</span>`,'ok');}
+              S.dup++;document.getElementById('stDup').textContent=S.dup;}
+          }else{rec.id=key;rec.status='new';await dbPut(rec);S.neu++;document.getElementById('stNew').textContent=S.neu;
+            const u=userFor(rec.mobile);logLine(`<span class="ok">✓</span> ${rec.mobile||'??'} ${u.userName?'· '+u.userName:''} · ${rec.invoiceDate||'?'} · ${money(rec.totalAmountDue)} <span class="mini">${f.name}</span>`,'ok');}
+        }
+      }
+    }catch(e){S.err++;document.getElementById('stErr').textContent=S.err;logLine(`<span class="err">✗ error</span> ${rel} — ${e.message||e}`,'err');}
+    S.parsed++;document.getElementById('stParsed').textContent=S.parsed;
+    const pct=((i+1)/pdfs.length)*100;document.getElementById('progBar').style.width=pct+'%';
+    const el=(Date.now()-t0)/1000;document.getElementById('stElapsed').textContent=el.toFixed(0)+'s';
+    document.getElementById('stEta').textContent=(el/(i+1)*(pdfs.length-i-1)).toFixed(0)+'s';
+    if(i%5===0)await new Promise(r=>setTimeout(r,0));
+  }
+  importing=false;toast(`Import complete — ${S.neu} new, ${S.dup} dup, ${S.img} skipped, ${S.err} errors`);await refreshAll();
+}
+
+/* ============================ Data + helpers ============================ */
+let DATA=[];
+const settings=JSON.parse(localStorage.getItem('sbms_settings')||'{}');
+function CUR(){return settings.currency||'₱';}
+function money(n){if(n==null||isNaN(n))return '—';return CUR()+Number(n).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});}
+function monthName(m){return['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][m]||'';}
+function renderViews(){
+  document.getElementById('navCount').textContent=DATA.length.toLocaleString();
+  renderDashboard();renderFilters();renderGrid();renderPreviewList();renderPhones();renderReportDeptOptions();
+  if(currentView==='reports')renderReport();if(currentView==='analytics')renderAnalytics();if(currentView==='charts')renderCharts();updateBackupInfo();}
+async function refreshAll(){DATA=await dbGetAll();applyUsers(DATA);renderViews();}
+function reapplyUsersEverywhere(){applyUsers(DATA);renderGrid();renderPhones();renderPreviewList();renderDashboard();
+  if(currentView==='reports')renderReport();if(currentView==='analytics')renderAnalytics();if(previewSel)openPreviewById(previewSel,true);}
+
+/* ============================ Dashboard ============================ */
+let charts={};function destroyChart(k){if(charts[k]){charts[k].destroy();delete charts[k];}}
+function accent(){return getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();}
+function accent2(){return getComputedStyle(document.documentElement).getPropertyValue('--accent2').trim();}
+function accentA(a){return accent()+Math.round(a*255).toString(16).padStart(2,'0');}
+function chartOpts(){const g=getComputedStyle(document.documentElement).getPropertyValue('--border');const tc=getComputedStyle(document.documentElement).getPropertyValue('--muted');
+  return{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:tc}}},scales:{x:{ticks:{color:tc},grid:{color:g}},y:{ticks:{color:tc},grid:{color:g}}}};}
+function renderDashboard(){
+  const d=DATA;const sum=f=>d.reduce((a,r)=>a+(r[f]||0),0);
+  const mobiles=new Set(d.map(r=>r.mobile).filter(Boolean));
+  const byMonth={};d.forEach(r=>{if(r.year&&r.month){const k=r.year+'-'+String(r.month).padStart(2,'0');byMonth[k]=(byMonth[k]||0)+(r.totalAmountDue||0);}});
+  const mk=Object.keys(byMonth).sort();let hi='—',lo='—';if(mk.length){const s=[...mk].sort((a,b)=>byMonth[b]-byMonth[a]);hi=s[0];lo=s[s.length-1];}
+  const dues=d.map(r=>r.totalAmountDue||0);const dup=d.filter(r=>r.status==='dup').length;
+  const avgM=mk.length?sum('totalAmountDue')/mk.length:0;const latest=d.map(r=>r.dateImported).filter(Boolean).sort().slice(-1)[0];
+  const linked=d.filter(r=>r.userName).length;
+  const cards=[
+    ['Total Invoices',d.length.toLocaleString(),'Parsed & stored','▤'],['Mobile Numbers',mobiles.size,'Unique lines','☎'],
+    ['Linked to a User',linked.toLocaleString(),'Have name/dept','👤'],
+    ['Total Current Charges',money(sum('currentCharges')),'All invoices','＄'],['Total Amount Due',money(sum('totalAmountDue')),'All invoices','∑'],
+    ['Total VAT',money(sum('vat')),'12% VAT','％'],['Total Device Cost',money(sum('deviceCost')),'Amortized','▣'],
+    ['Total Discounts',money(sum('discounts')),'Applied','⌁'],['Avg Monthly Billing',money(avgM),mk.length+' months','◔'],
+    ['Highest Billing Month',hi,hi==='—'?'':money(byMonth[hi]),'▲'],['Lowest Billing Month',lo,lo==='—'?'':money(byMonth[lo]),'▼'],
+    ['Highest Single Bill',money(Math.max(0,...dues)),'One invoice','⤒'],['Duplicate Invoices',dup,'Flagged','↻'],
+    ['Latest Import',latest?new Date(latest).toLocaleString():'—','','⌚'],
+  ];
+  document.getElementById('dashCards').innerHTML=cards.map(c=>`<div class="card"><div class="chip">${c[3]}</div><div class="k">${c[0]}</div><div class="v">${c[1]}</div><div class="d">${c[2]}</div></div>`).join('');
+  if(window.Chart){
+    destroyChart('dm');charts.dm=new Chart(document.getElementById('dashChartMonthly'),{type:'line',data:{labels:mk,datasets:[{label:'Amount Due',data:mk.map(k=>byMonth[k]),borderColor:accent(),backgroundColor:accentA(.15),fill:true,tension:.35,pointRadius:2}]},options:chartOpts()});
+    const byU={};d.forEach(r=>{const key=r.userName||r.mobile;if(key)byU[key]=(byU[key]||0)+(r.currentCharges||0);});
+    const top=Object.entries(byU).sort((a,b)=>b[1]-a[1]).slice(0,8);
+    destroyChart('dt');charts.dt=new Chart(document.getElementById('dashChartTop'),{type:'bar',data:{labels:top.map(t=>t[0]),datasets:[{label:'Lifetime charges',data:top.map(t=>t[1]),backgroundColor:accentA(.7)}]},options:chartOpts()});
+  }
+}
+
+/* ============================ Filters ============================ */
+function renderFilters(){
+  const years=[...new Set(DATA.map(r=>r.year).filter(Boolean))].sort();
+  const phones=[...new Set(DATA.map(r=>r.mobile).filter(Boolean))].sort();
+  fill('fltYear',years,'All Years');fill('fltPhone',phones,'All Phone #');
+  fill('fltMonth',[1,2,3,4,5,6,7,8,9,10,11,12].map(m=>[m,monthName(m)]),'All Months',true);
+  fill('fltQuarter',['Q1','Q2','Q3','Q4'],'All Quarters');
+  fill('fltDept',departments,'All Depts');
+}
+function fill(id,arr,all,pair){const s=document.getElementById(id);const cur=s.value;
+  s.innerHTML=`<option value="">${all}</option>`+arr.map(a=>pair?`<option value="${a[0]}">${a[1]}</option>`:`<option>${a}</option>`).join('');s.value=cur;}
+
+/* ============================ Data grid ============================ */
+const ALLCOLS=[
+  ['userId','User ID'],['userName','User Name'],['department','Dept','d'],
+  ['mobile','Mobile #'],['invoiceNumber','Invoice #'],['accountNumber','Account #'],
+  ['invoiceDate','Invoice Date'],['month','Mo','n'],['year','Year'],['quarter','Qtr'],
+  ['currentCharges','Current','n'],['prevAmountDue','Prev Bal','n'],['remainingBalance','Remain','n'],['totalAmountDue','Amount Due','n'],
+  ['planCharge','Plan','n'],['deviceCost','Device','n'],['discounts','Disc','n'],['vat','VAT','n'],['creditLimit','Credit Limit','n'],
+  ['dueDate','Due Date'],['billingPeriod','Billing Period'],['invoiceFolder','Folder'],['invoiceFile','File'],['status','Status']
+];
+const COLMAP=Object.fromEntries(ALLCOLS.map(c=>[c[0],c]));
+let colOrder=JSON.parse(localStorage.getItem('sbms_colorder')||'null')||ALLCOLS.map(c=>c[0]);
+colOrder=colOrder.filter(k=>COLMAP[k]);ALLCOLS.forEach(c=>{if(!colOrder.includes(c[0]))colOrder.push(c[0]);});
+function saveColOrder(){localStorage.setItem('sbms_colorder',JSON.stringify(colOrder));}
+function cols(){return colOrder.map(k=>COLMAP[k]);}
+let gridSort={col:'invoiceDate',dir:-1},gridPage=1;
+function val(id){return document.getElementById(id).value;}
+function gridFiltered(){
+  let rows=DATA.slice();const y=val('fltYear'),m=val('fltMonth'),q=val('fltQuarter'),dp=val('fltDept'),p=val('fltPhone'),s=val('fltSearch').toLowerCase(),gs=val('globalSearch').toLowerCase();
+  if(y)rows=rows.filter(r=>String(r.year)===y);if(m)rows=rows.filter(r=>String(r.month)===m);if(q)rows=rows.filter(r=>r.quarter===q);
+  if(dp)rows=rows.filter(r=>r.department===dp);if(p)rows=rows.filter(r=>r.mobile===p);
+  const term=s||gs;if(term)rows=rows.filter(r=>JSON.stringify(r).toLowerCase().includes(term));
+  rows.sort((a,b)=>{let x=a[gridSort.col],z=b[gridSort.col];if(x==null)x='';if(z==null)z='';
+    if(typeof x==='number'&&typeof z==='number')return(x-z)*gridSort.dir;
+    const nx=parseFloat(x),nz=parseFloat(z);if(!isNaN(nx)&&!isNaN(nz)&&String(x).match(/^[\d.,-]+$/))return(nx-nz)*gridSort.dir;
+    return String(x).localeCompare(String(z))*gridSort.dir;});
+  return rows;
+}
+function renderGrid(){
+  const head=document.getElementById('gridHead');
+  head.innerHTML=cols().map(c=>{const cls=c[0]===gridSort.col?(gridSort.dir>0?'asc':'desc'):'';return `<th draggable="true" data-c="${c[0]}" class="${cls}">${c[1]}</th>`;}).join('')+'<th>◈</th>';
+  head.querySelectorAll('th[data-c]').forEach(th=>{
+    th.onclick=e=>{if(th.dataset.dragging)return;const c=th.dataset.c;if(gridSort.col===c)gridSort.dir*=-1;else{gridSort.col=c;gridSort.dir=1;}renderGrid();};
+    th.addEventListener('dragstart',e=>{th.dataset.dragging='1';e.dataTransfer.setData('text/plain',th.dataset.c);});
+    th.addEventListener('dragend',()=>{delete th.dataset.dragging;head.querySelectorAll('th').forEach(x=>x.classList.remove('drag'));});
+    th.addEventListener('dragover',e=>{e.preventDefault();th.classList.add('drag');});
+    th.addEventListener('dragleave',()=>th.classList.remove('drag'));
+    th.addEventListener('drop',e=>{e.preventDefault();const from=e.dataTransfer.getData('text/plain');const to=th.dataset.c;if(!from||from===to)return;
+      const fi=colOrder.indexOf(from),ti=colOrder.indexOf(to);colOrder.splice(fi,1);colOrder.splice(ti,0,from);saveColOrder();renderGrid();});
+  });
+  const rows=gridFiltered();const size=+val('pgSize');const pages=Math.max(1,Math.ceil(rows.length/size));if(gridPage>pages)gridPage=pages;
+  const slice=rows.slice((gridPage-1)*size,gridPage*size);
+  document.getElementById('gridBody').innerHTML=slice.map(r=>{
+    return `<tr class="clickable" data-id="${encodeURIComponent(r.id)}">`+cols().map(c=>{
+      const v=r[c[0]];let disp=v;const isN=c[2]==='n';
+      if(isN&&typeof v==='number')disp=v.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+      if(v==null||v==='')disp='—';
+      if(c[0]==='status')disp=`<span class="tag ${v==='dup'?'dup':'new'}">${v||'new'}</span>`;
+      if(c[2]==='d'&&v)disp=`<span class="chip-dept">${v}</span>`;
+      return `<td class="${isN?'num':''}">${disp}</td>`;}).join('')+`<td><button class="btn sm ghost" data-prev="${encodeURIComponent(r.id)}">◈</button></td></tr>`;
+  }).join('')||`<tr><td colspan="${cols().length+1}"><div class="empty"><div class="big">▤</div>No invoices. Go to <b>Import PDFs</b>.</div></td></tr>`;
+  document.getElementById('gridInfo').textContent=rows.length.toLocaleString()+' rows';
+  document.getElementById('pgLabel').textContent=gridPage+' / '+pages;
+  document.querySelectorAll('#gridBody tr.clickable').forEach(tr=>{
+    tr.addEventListener('click',e=>{if(e.target.dataset.prev){if(MODE==='viewer')openEdit(decodeURIComponent(e.target.dataset.prev));else openPreviewById(decodeURIComponent(e.target.dataset.prev));return;}openEdit(decodeURIComponent(tr.dataset.id));});
+  });
+}
+['fltYear','fltMonth','fltQuarter','fltDept','fltPhone','fltSearch','pgSize'].forEach(id=>document.getElementById(id).addEventListener('input',()=>{gridPage=1;renderGrid();}));
+document.getElementById('pgFirst').onclick=()=>{gridPage=1;renderGrid();};
+document.getElementById('pgPrev').onclick=()=>{gridPage=Math.max(1,gridPage-1);renderGrid();};
+document.getElementById('pgNext').onclick=()=>{gridPage++;renderGrid();};
+document.getElementById('pgLast').onclick=()=>{gridPage=1e9;renderGrid();};
+document.getElementById('btnResetCols').onclick=()=>{colOrder=ALLCOLS.map(c=>c[0]);saveColOrder();renderGrid();toast('Column order reset');};
+document.getElementById('btnAddRow').onclick=async()=>{const rec={id:'manual#'+Date.now(),status:'new',dateImported:new Date().toISOString(),mobile:'',invoiceNumber:'',invoiceDate:''};await dbPut(rec);await refreshAll();openEdit(rec.id);};
+
+/* ============================ Edit modal ============================ */
+const EDIT_FIELDS=[
+  ['mobile','Mobile #','text'],['invoiceNumber','Invoice #','text'],['accountNumber','Account #','text'],
+  ['invoiceDate','Invoice Date','text'],['billingPeriod','Billing Period','text'],
+  ['year','Year','num'],['month','Month','num'],['quarter','Quarter','text'],
+  ['currentCharges','Current Charges','num'],['prevAmountDue','Previous Balance','num'],['remainingBalance','Remaining Balance','num'],
+  ['totalAmountDue','Total Amount Due','num'],['planCharge','Plan Charge','num'],['deviceCost','Device Cost','num'],
+  ['discounts','Discounts','num'],['vat','VAT','num'],['creditLimit','Credit Limit','num'],['dueDate','Due Date','text'],
+];
+let editId=null;
+function openEdit(id){const r=DATA.find(x=>x.id===id);if(!r)return;editId=id;
+  document.getElementById('editTitle').textContent='Edit invoice';
+  document.getElementById('editSub').textContent=(r.invoiceFile||r.invoicePath||'manual entry');
+  const deptOpts=`<option value="">— none —</option>`+departments.map(d=>`<option ${r.department===d?'selected':''}>${d}</option>`).join('');
+  let html=`<div class="sectionlabel">User link (applies to all invoices of this phone)</div>`;
+  html+=`<label>User Name<input id="ef_userName" value="${escAttr(r.userName||'')}"></label>`;
+  html+=`<label>User ID (WWID)<input id="ef_userId" value="${escAttr(r.userId||'')}"></label>`;
+  html+=`<label>Department<select id="ef_department">${deptOpts}</select></label>`;
+  html+=`<div class="sectionlabel">Invoice fields</div>`;
+  EDIT_FIELDS.forEach(f=>{const v=r[f[0]];html+=`<label>${f[1]}<input id="ef_${f[0]}" value="${escAttr(v==null?'':v)}"></label>`;});
+  document.getElementById('editForm').innerHTML=html;
+  const ro=MODE==='viewer';
+  document.getElementById('editTitle').textContent=ro?'Invoice details':'Edit invoice';
+  document.getElementById('editSave').style.display=ro?'none':'';
+  document.querySelectorAll('#editForm input,#editForm select').forEach(el=>el.disabled=ro);
+  document.getElementById('editOverlay').classList.add('show');
+}
+function escAttr(s){return String(s).replace(/"/g,'&quot;').replace(/</g,'&lt;');}
+function closeEdit(){document.getElementById('editOverlay').classList.remove('show');editId=null;}
+document.getElementById('editCancel').onclick=closeEdit;
+document.getElementById('editOverlay').addEventListener('click',e=>{if(e.target.id==='editOverlay')closeEdit();});
+document.getElementById('editSave').onclick=async()=>{
+  const r=DATA.find(x=>x.id===editId);if(!r)return;
+  EDIT_FIELDS.forEach(f=>{let v=document.getElementById('ef_'+f[0]).value.trim();if(f[2]==='num')v=v===''?null:num(v);else if(v==='')v=null;r[f[0]]=v;});
+  if(r.month&&!r.quarter)r.quarter=quarterOf(+r.month);
+  await dbPut(r);
+  const uName=document.getElementById('ef_userName').value.trim();const uId=document.getElementById('ef_userId').value.trim();const uDept=document.getElementById('ef_department').value;
+  if(r.mobile)setUser(r.mobile,{userName:uName,userId:uId,department:uDept});
+  closeEdit();await refreshAll();toast('Saved');
+};
+
+/* ============================ Preview (canvas render) ============================ */
+let previewSel=null;
+function renderPreviewList(){
+  const q=(document.getElementById('previewSearch').value||'').toLowerCase();
+  let rows=DATA.filter(r=>!q||JSON.stringify(r).toLowerCase().includes(q)).sort((a,b)=>(a.invoicePath||'').localeCompare(b.invoicePath||''));
+  document.getElementById('previewList').innerHTML=rows.slice(0,600).map(r=>`<div class="inv-item ${r.id===previewSel?'active':''}" data-id="${encodeURIComponent(r.id)}">
+    <div class="t">${r.mobile||'??'} ${r.userName?'· '+r.userName:''} · ${money(r.totalAmountDue)}</div>
+    <div class="s">${r.invoiceDate||'?'} · ${r.department||'—'} · ${r.invoiceFile||''}</div></div>`).join('')||'<div class="empty">No invoices</div>';
+  document.querySelectorAll('#previewList .inv-item').forEach(el=>el.onclick=()=>openPreviewById(decodeURIComponent(el.dataset.id)));
+}
+async function openPreviewById(id,keepView){
+  const r=DATA.find(x=>x.id===id);if(!r)return;previewSel=id;if(!keepView)setView('preview');
+  document.getElementById('previewName').textContent=r.invoicePath||r.invoiceFile||'';
+  const u=userFor(r.mobile);
+  const kv=[
+    ['User Name',u.userName],['User ID',u.userId],['Department',u.department],
+    ['Mobile #',r.mobile],['Invoice #',r.invoiceNumber],['Account #',r.accountNumber],['Customer',r.customer],['Company',r.company],
+    ['Invoice Date',r.invoiceDate],['Billing Period',r.billingPeriod],['Month',r.month?monthName(r.month):''],['Year',r.year],['Quarter',r.quarter],
+    ['Plan',r.plan],['Plan Charge',money(r.planCharge)],['Device'+(r.deviceTerm?' '+r.deviceTerm:''),money(r.deviceCost)],['Discounts',money(r.discounts)],
+    ['VAT',money(r.vat)],['Current Charges',money(r.currentCharges)],['Previous Balance',money(r.prevAmountDue)],['Remaining Bal',money(r.remainingBalance)],
+    ['Credit Limit',money(r.creditLimit)],['Due Date',r.dueDate],['TOTAL AMOUNT DUE',money(r.totalAmountDue)],
+  ];
+  document.getElementById('previewKV').innerHTML=kv.map(k=>`<div class="kk">${k[0]}</div><div class="vv">${k[1]==null||k[1]===''?'—':k[1]}</div>`).join('');
+  renderPreviewList();
+  const view=document.getElementById('pdfView');const fh=fileHandles[r.invoicePath];
+  if(!fh){view.innerHTML='<div class="msg">PDF not loaded this session.<br>Re-import the folder (Import PDFs) to view the file inline, or click <b>Open in new tab</b>.</div>';return;}
+  view.innerHTML='<div class="msg">Rendering…</div>';
+  try{
+    await ensurePdfjs();const buf=await fh.arrayBuffer();const pdf=await window.pdfjsLib.getDocument({data:buf}).promise;
+    view.innerHTML='';const n=Math.min(pdf.numPages,8);
+    for(let p=1;p<=n;p++){const page=await pdf.getPage(p);const vp=page.getViewport({scale:1.4});
+      const cv=document.createElement('canvas');cv.width=vp.width;cv.height=vp.height;view.appendChild(cv);
+      await page.render({canvasContext:cv.getContext('2d'),viewport:vp}).promise;}
+  }catch(e){view.innerHTML='<div class="msg">Could not render this PDF ('+(e.message||e)+').<br>Try <b>Open in new tab</b>.</div>';}
+}
+document.getElementById('previewSearch').addEventListener('input',renderPreviewList);
+document.getElementById('btnOpenPdf').onclick=()=>{const r=DATA.find(x=>x.id===previewSel);const fh=r&&fileHandles[r.invoicePath];if(fh)window.open(URL.createObjectURL(fh));else toast('Re-import the folder to open the PDF');};
+
+/* ============================ Phones (master/detail) ============================ */
+function phoneAgg(){const map={};DATA.forEach(r=>{if(!r.mobile)return;const m=map[r.mobile]||(map[r.mobile]={n:0,cur:0,due:0,bills:[]});
+  m.n++;m.cur+=r.currentCharges||0;m.due+=r.totalAmountDue||0;m.bills.push(r.totalAmountDue||0);});return map;}
+let phoneSel=null;
+function renderPhones(){
+  const q=(document.getElementById('phoneSearch').value||'').toLowerCase();const map=phoneAgg();
+  const rows=Object.entries(map).map(([k,m])=>{const u=userFor(k);return{k,m,u};})
+    .filter(o=>!q||o.k.includes(q)||(o.u.userName||'').toLowerCase().includes(q)||(o.u.department||'').toLowerCase().includes(q))
+    .sort((a,b)=>b.m.cur-a.m.cur);
+  document.getElementById('phonesBody').innerHTML=rows.map(({k,m,u})=>{
+    const hi=Math.max(...m.bills),lo=Math.min(...m.bills),avg=m.due/m.n;
+    return `<tr class="clickable ${k===phoneSel?'sel':''}" data-ph="${k}"><td><b>${k}</b></td><td>${u.userName||'—'}</td><td>${u.department?'<span class=chip-dept>'+u.department+'</span>':'—'}</td>
+      <td class="num">${m.n}</td><td class="num">${money(m.cur)}</td><td class="num">${money(m.due)}</td><td class="num">${money(avg)}</td><td class="num">${money(hi)}</td><td class="num">${money(lo)}</td></tr>`;
+  }).join('')||'<tr><td colspan="9"><div class="empty">No data</div></td></tr>';
+  document.querySelectorAll('#phonesBody tr.clickable').forEach(tr=>tr.onclick=()=>{phoneSel=tr.dataset.ph;renderPhones();renderPhoneDetail();});
+  if(phoneSel)renderPhoneDetail();
+}
+function renderPhoneDetail(){
+  const u=userFor(phoneSel);document.getElementById('phoneSelLabel').textContent=phoneSel+(u.userName?' · '+u.userName:'')+(u.department?' · '+u.department:'');
+  const rows=DATA.filter(r=>r.mobile===phoneSel).sort((a,b)=>(a.year*100+a.month)-(b.year*100+b.month));
+  document.getElementById('phoneDetailBody').innerHTML=rows.map(r=>`<tr><td>${r.invoiceDate||'—'}</td><td>${r.invoiceNumber||'—'}</td><td>${r.accountNumber||'—'}</td>
+    <td class="num">${money(r.currentCharges)}</td><td class="num">${money(r.prevAmountDue)}</td><td class="num">${money(r.totalAmountDue)}</td>
+    <td class="num">${money(r.planCharge)}</td><td class="num">${money(r.deviceCost)}</td><td class="num">${money(r.vat)}</td><td>${r.dueDate||'—'}</td><td>${r.invoiceFolder||''}</td></tr>`).join('')
+    ||'<tr><td colspan="11"><div class="empty">No invoices for this number</div></td></tr>';
+}
+document.getElementById('phoneSearch').addEventListener('input',renderPhones);
+
+/* ============================ Reports ============================ */
+function renderReportDeptOptions(){const s=document.getElementById('reportDept');const cur=s.value;
+  s.innerHTML=`<option value="">All Departments</option>`+departments.map(d=>`<option>${d}</option>`).join('')+`<option value="__none__">(Unassigned)</option>`;s.value=cur;}
+function renderReport(){
+  const type=val('reportType');const dept=val('reportDept');
+  let data=DATA.slice();if(dept==='__none__')data=data.filter(r=>!r.department);else if(dept)data=data.filter(r=>r.department===dept);
+  const g=(keyFn,label)=>{const map={};data.forEach(r=>{const k=keyFn(r);if(k==null||k==='')return;const m=map[k]||(map[k]={n:0,cur:0,due:0,vat:0,disc:0,dev:0,prev:0});
+    m.n++;m.cur+=r.currentCharges||0;m.due+=r.totalAmountDue||0;m.vat+=r.vat||0;m.disc+=r.discounts||0;m.dev+=r.deviceCost||0;m.prev+=r.prevAmountDue||0;});
+    const keys=Object.keys(map).sort();
+    return `<div class="tablewrap"><table><thead><tr><th>${label}</th><th>Invoices</th><th>Current Charges</th><th>Device</th><th>VAT</th><th>Discounts</th><th>Prev Balance</th><th>Total Amount Due</th></tr></thead><tbody>`+
+      keys.map(k=>{const m=map[k];return `<tr><td><b>${k}</b></td><td class="num">${m.n}</td><td class="num">${money(m.cur)}</td><td class="num">${money(m.dev)}</td><td class="num">${money(m.vat)}</td><td class="num">${money(m.disc)}</td><td class="num">${money(m.prev)}</td><td class="num">${money(m.due)}</td></tr>`;}).join('')+
+      `</tbody><tfoot><tr style="font-weight:800;background:var(--grid-head)"><td>TOTAL</td><td class="num">${data.length}</td>`+
+      ['cur','dev','vat','disc','prev','due'].map(f=>`<td class="num">${money(keys.reduce((a,k)=>a+map[k][f],0))}</td>`).join('')+`</tr></tfoot></table></div>`;};
+  let html='';
+  if(type==='monthly')html=g(r=>r.year&&r.month?r.year+'-'+String(r.month).padStart(2,'0'):null,'Month');
+  else if(type==='quarterly')html=g(r=>r.year&&r.quarter?r.year+' '+r.quarter:null,'Quarter');
+  else if(type==='yearly')html=g(r=>r.year,'Year');
+  else if(type==='department')html=g(r=>r.department||'(Unassigned)','Department');
+  else if(type==='phone')html=g(r=>r.userName?r.mobile+' · '+r.userName:r.mobile,'Mobile / User');
+  else if(type==='grand'){const s=f=>data.reduce((a,r)=>a+(r[f]||0),0);
+    html=`<div class="cards">`+[['Invoices',data.length],['Current Charges',money(s('currentCharges'))],['Device Cost',money(s('deviceCost'))],['VAT',money(s('vat'))],['Discounts',money(s('discounts'))],['Previous Balance',money(s('prevAmountDue'))],['Total Amount Due',money(s('totalAmountDue'))]].map(c=>`<div class="card"><div class="k">${c[0]}</div><div class="v">${c[1]}</div></div>`).join('')+`</div>`;}
+  document.getElementById('reportOut').innerHTML=html;
+}
+document.getElementById('reportType').addEventListener('change',renderReport);
+document.getElementById('reportDept').addEventListener('change',renderReport);
+document.getElementById('btnReportPrint').onclick=()=>window.print();
+document.getElementById('btnReportXlsx').onclick=async()=>{await loadLib('xlsx').catch(()=>{});if(!window.XLSX)return toast('Excel library unavailable offline');
+  const t=document.querySelector('#reportOut table');if(!t)return toast('Nothing to export');
+  const ws=XLSX.utils.table_to_sheet(t);const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Report');XLSX.writeFile(wb,'smart_report.xlsx');};
+
+/* ============================ Analytics ============================ */
+function miniTable(rows,head){return `<div class="tablewrap"><table><thead><tr>${head.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map((c,i)=>`<td class="${i>0?'num':''}">${c==null?'—':c}</td>`).join('')}</tr>`).join('')||`<tr><td colspan="${head.length}"><div class="empty">No data</div></td></tr>`}</tbody></table></div>`;}
+function renderAnalytics(){
+  const byMonth={};DATA.forEach(r=>{if(r.year&&r.month){const k=r.year+'-'+String(r.month).padStart(2,'0');byMonth[k]=(byMonth[k]||0)+(r.totalAmountDue||0);}});
+  const keys=Object.keys(byMonth).sort();const vals=keys.map(k=>byMonth[k]);const avg=vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:0;
+  const cards=[['Months tracked',keys.length],['Avg Monthly Due',money(avg)],['Peak Month',keys.length?keys[vals.indexOf(Math.max(...vals))]:'—'],['Departments',[...new Set(DATA.map(r=>r.department).filter(Boolean))].length]];
+  document.getElementById('anaCards').innerHTML=cards.map(c=>`<div class="card"><div class="k">${c[0]}</div><div class="v">${c[1]}</div></div>`).join('');
+  const high=[...DATA].sort((a,b)=>(b.totalAmountDue||0)-(a.totalAmountDue||0)).slice(0,10);
+  document.getElementById('anaTopHigh').innerHTML=miniTable(high.map(r=>[(r.userName||r.mobile),r.invoiceDate,money(r.totalAmountDue)]),['User / Mobile','Date','Amount Due']);
+  const byU={};DATA.forEach(r=>{const k=r.userName||r.mobile;if(k)byU[k]=(byU[k]||0)+(r.currentCharges||0);});
+  const topN=Object.entries(byU).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  document.getElementById('anaTopNum').innerHTML=miniTable(topN.map(t=>[t[0],money(t[1])]),['User','Lifetime Charges']);
+  if(window.Chart){const byDept={};DATA.forEach(r=>{const k=r.department||'(Unassigned)';byDept[k]=(byDept[k]||0)+(r.totalAmountDue||0);});
+    const dk=Object.keys(byDept);destroyChart('dept');charts.dept=new Chart(document.getElementById('anaChartDept'),{type:'bar',data:{labels:dk,datasets:[{label:'Amount Due',data:dk.map(k=>byDept[k]),backgroundColor:accentA(.7)}]},options:chartOpts()});}
+}
+
+/* ============================ Charts ============================ */
+function renderCharts(){if(!window.Chart)return;const byMonth={},byQ={},byYear={};let plan=0,dev=0,vat=0,disc=0;
+  DATA.forEach(r=>{if(r.year&&r.month){const k=r.year+'-'+String(r.month).padStart(2,'0');byMonth[k]=(byMonth[k]||0)+(r.totalAmountDue||0);}
+    if(r.year&&r.quarter)byQ[r.year+' '+r.quarter]=(byQ[r.year+' '+r.quarter]||0)+(r.totalAmountDue||0);
+    if(r.year)byYear[r.year]=(byYear[r.year]||0)+(r.totalAmountDue||0);
+    plan+=r.planCharge||0;dev+=r.deviceCost||0;vat+=r.vat||0;disc+=Math.abs(r.discounts||0);});
+  const mk=Object.keys(byMonth).sort(),qk=Object.keys(byQ).sort(),yk=Object.keys(byYear).sort();
+  destroyChart('l');charts.l=new Chart(document.getElementById('cLine'),{type:'line',data:{labels:mk,datasets:[{label:'Amount Due',data:mk.map(k=>byMonth[k]),borderColor:accent(),backgroundColor:accentA(.15),fill:true,tension:.35}]},options:chartOpts()});
+  destroyChart('b');charts.b=new Chart(document.getElementById('cBar'),{type:'bar',data:{labels:qk,datasets:[{label:'Quarterly',data:qk.map(k=>byQ[k]),backgroundColor:accentA(.7)}]},options:chartOpts()});
+  destroyChart('d');charts.d=new Chart(document.getElementById('cDon'),{type:'doughnut',data:{labels:['Plan','Device','VAT','Discounts'],datasets:[{data:[plan,dev,vat,disc],backgroundColor:[accent(),accent2(),'#f59e0b','#ef4444']}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:getComputedStyle(document.documentElement).getPropertyValue('--muted')}}}}});
+  destroyChart('y');charts.y=new Chart(document.getElementById('cYear'),{type:'bar',data:{labels:yk,datasets:[{label:'Yearly',data:yk.map(k=>byYear[k]),backgroundColor:accent2()}]},options:chartOpts()});
+}
+
+/* ============================ Export (Excel only) ============================ */
+document.getElementById('btnExportXlsx').onclick=async()=>{await loadLib('xlsx').catch(()=>{});if(!window.XLSX)return toast('Excel library unavailable offline');
+  const rows=gridFiltered().map(r=>{const o={};cols().forEach(c=>o[c[1]]=r[c[0]]);return o;});
+  const ws=XLSX.utils.json_to_sheet(rows);const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Invoices');XLSX.writeFile(wb,'smart_billing.xlsx');};
+
+/* ============================ Backup / restore ============================ */
+function download(name,content,type){const b=new Blob([content],{type});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name;a.click();}
+document.getElementById('btnBackup').onclick=async()=>{const all=await dbGetAll();download('smart_billing_backup_'+new Date().toISOString().slice(0,10)+'.json',JSON.stringify({v:2,exported:new Date().toISOString(),records:all,userMap,departments},null,2),'application/json');toast('Backed up '+all.length+' records');};
+document.getElementById('btnRestore').onclick=()=>document.getElementById('restoreInput').click();
+document.getElementById('restoreInput').onchange=async e=>{const f=e.target.files[0];if(!f)return;const j=JSON.parse(await f.text());
+  if(j.userMap){userMap=j.userMap;saveUserMap();}if(j.departments){departments=j.departments;saveDepts();}
+  const recs=j.records||j;let n=0;for(const r of recs){if(!r.id)r.id=r.dupKey||('rec#'+Date.now()+Math.random());await dbPut(r);n++;}
+  renderDeptUI();renderUsers();await refreshAll();toast('Restored '+n+' records');};
+document.getElementById('btnWipe').onclick=async()=>{if(!confirm('Delete ALL parsed invoice data? (User mapping & departments are kept.)'))return;await dbClear();await refreshAll();toast('Invoice data cleared');};
+document.getElementById('btnRebuild').onclick=async()=>{
+  if(!confirm('Rebuild & de-duplicate?\n\nThis keeps the best record for each phone + billing month (merging old blank rows with newer parsed ones). Recommended after upgrading the parser.'))return;
+  const all=await dbGetAll();const groups={};
+  for(const r of all){const ym=deriveYM(r.invoicePath||r.invoiceFolder||'');if(!r.year)r.year=ym.year;if(!r.month)r.month=ym.month;if(r.month&&!r.quarter)r.quarter=quarterOf(r.month);
+    const key=stableKeyFor(r);(groups[key]=groups[key]||[]).push(r);}
+  await dbClear();let kept=0,removed=0;
+  for(const k in groups){const arr=groups[k].sort((a,b)=>recScore(b)-recScore(a));const best=arr[0];best.id=k;best.stableKey=k;best.dupKey=k;await dbPut(best);kept++;removed+=arr.length-1;}
+  await refreshAll();toast(`Rebuilt — ${kept} kept, ${removed} duplicates removed`);
+};
+function updateBackupInfo(){document.getElementById('backupInfo').textContent=`${DATA.length.toLocaleString()} invoices · ${Object.keys(userMap).length} linked users · ${departments.length} departments.`;}
+
+/* ============================ Settings: themes/depts/users ============================ */
+const THEMES=[['ocean','Ocean'],['royal','Royal'],['emerald','Emerald'],['forest','Forest'],['cyber','Cyber'],['purple','Purple'],['midnight','Midnight'],['arctic','Arctic'],['crimson','Crimson'],['ruby','Ruby'],['sunset','Sunset'],['orange','Orange'],['amber','Amber'],['gold','Gold'],['rose','Rose'],['sakura','Sakura'],['mint','Mint'],['teal','Teal'],['graphite','Graphite'],['pureblack','Pure Black']];
+function saveSettings(){localStorage.setItem('sbms_settings',JSON.stringify(settings));}
+function applySettings(){document.documentElement.dataset.theme=settings.theme||'ocean';document.documentElement.dataset.mode=settings.mode||'dark';
+  document.documentElement.style.setProperty('--grid-density',settings.density||'8px');
+  document.getElementById('setCurrency').value=settings.currency||'₱';document.getElementById('setDensity').value=settings.density||'8px';
+  [...document.querySelectorAll('#modeToggle button')].forEach(b=>b.classList.toggle('on',b.dataset.mode===(settings.mode||'dark')));
+  [...document.querySelectorAll('.sw')].forEach(s=>s.classList.toggle('active',s.dataset.t===(settings.theme||'ocean')));}
+function buildSwatches(){document.getElementById('swatches').innerHTML=THEMES.map(t=>`<div class="sw" data-t="${t[0]}" onclick="setTheme('${t[0]}')"><div class="dot"></div>${t[1]}</div>`).join('');
+  document.querySelectorAll('.sw').forEach(sw=>{const tmp=document.createElement('div');tmp.dataset.theme=sw.dataset.t;document.body.appendChild(tmp);const cs=getComputedStyle(tmp);sw.querySelector('.dot').style.background=`linear-gradient(135deg,${cs.getPropertyValue('--accent')},${cs.getPropertyValue('--accent2')})`;tmp.remove();});}
+window.setTheme=t=>{settings.theme=t;saveSettings();applySettings();renderDashboard();if(currentView==='charts')renderCharts();if(currentView==='analytics')renderAnalytics();};
+document.querySelectorAll('#modeToggle button').forEach(b=>b.onclick=()=>{settings.mode=b.dataset.mode;saveSettings();applySettings();renderDashboard();if(currentView==='charts')renderCharts();if(currentView==='analytics')renderAnalytics();});
+document.getElementById('setDensity').onchange=e=>{settings.density=e.target.value;saveSettings();applySettings();};
+document.getElementById('setCurrency').oninput=e=>{settings.currency=e.target.value;saveSettings();renderDashboard();renderGrid();renderPhones();};
+
+function renderDeptUI(){document.getElementById('deptPills').innerHTML=departments.map(d=>`<span class="pill">${d}<button data-d="${escAttr(d)}">✕</button></span>`).join('')||'<span class="mini">No departments yet.</span>';
+  document.querySelectorAll('#deptPills .pill button').forEach(b=>b.onclick=()=>{departments=departments.filter(x=>x!==b.dataset.d);saveDepts();renderDeptUI();renderFilters();renderReportDeptOptions();renderUsers();renderAuthUI();initAuthUI();toast('Department removed');});}
+document.getElementById('btnAddDept').onclick=()=>{const v=document.getElementById('newDept').value.trim();if(!v)return;if(!departments.includes(v))departments.push(v);saveDepts();document.getElementById('newDept').value='';renderDeptUI();renderFilters();renderReportDeptOptions();renderUsers();renderAuthUI();initAuthUI();toast('Department added');};
+
+function usersRows(){
+  const q=(document.getElementById('userSearch').value||'').toLowerCase();
+  const phones=new Set([...Object.keys(userMap),...DATA.map(r=>r.mobile).filter(Boolean)]);
+  return [...phones].filter(p=>{const u=userFor(p);return !q||p.includes(q)||(u.userName||'').toLowerCase().includes(q)||(u.userId||'').toLowerCase().includes(q)||(u.department||'').toLowerCase().includes(q);}).sort();
+}
+function renderUsers(){
+  const rows=usersRows();
+  document.getElementById('usersBody').innerHTML=rows.map(p=>{const u=userFor(p);
+    const opts=`<option value="">—</option>`+departments.map(d=>`<option ${u.department===d?'selected':''}>${d}</option>`).join('');
+    return `<tr data-p="${p}"><td><b>${p}</b></td>
+      <td><input class="inp uName" style="width:100%" value="${escAttr(u.userName||'')}"></td>
+      <td><input class="inp uId" style="width:100%" value="${escAttr(u.userId||'')}"></td>
+      <td><select class="inp uDept">${opts}</select></td>
+      <td><button class="btn sm uDel" title="Remove link">✕</button></td></tr>`;}).join('')||'<tr><td colspan="5"><div class="empty">No phones yet. Import invoices or add a link.</div></td></tr>';
+  document.querySelectorAll('#usersBody tr[data-p]').forEach(tr=>{const p=tr.dataset.p;
+    const save=()=>{setUser(p,{userName:tr.querySelector('.uName').value.trim(),userId:tr.querySelector('.uId').value.trim(),department:tr.querySelector('.uDept').value});reapplyUsersEverywhere();};
+    tr.querySelector('.uName').onchange=save;tr.querySelector('.uId').onchange=save;tr.querySelector('.uDept').onchange=save;
+    tr.querySelector('.uDel').onclick=()=>{delete userMap[p];saveUserMap();renderUsers();reapplyUsersEverywhere();toast('Link removed');};
+  });
+}
+document.getElementById('userSearch').addEventListener('input',renderUsers);
+document.getElementById('btnAddUser').onclick=()=>{const p=prompt('Enter the mobile number (e.g. 09285598741):');if(!p)return;const m=p.replace(/\D/g,'');const ph=m.length===10?'0'+m:m;if(!userMap[ph])userMap[ph]={userName:'',userId:'',department:''};saveUserMap();document.getElementById('userSearch').value=ph;renderUsers();};
+document.getElementById('btnImportMap').onclick=()=>document.getElementById('mapInput').click();
+document.getElementById('mapInput').onchange=async e=>{const f=e.target.files[0];if(!f)return;await loadLib('xlsx').catch(()=>{});if(!window.XLSX)return toast('Excel library unavailable offline');
+  const wb=XLSX.read(await f.arrayBuffer(),{type:'array'});let added=0;
+  wb.SheetNames.forEach(sn=>{const rows=XLSX.utils.sheet_to_json(wb.Sheets[sn],{defval:''});
+    rows.forEach(row=>{const keys=Object.keys(row);const find=res=>{const k=keys.find(k=>res.test(k));return k?String(row[k]).trim():'';};
+      let ph=find(/^(min|phone|mobile|contact)/i).replace(/\D/g,'');if(ph.length===10)ph='0'+ph;if(ph.length!==11)return;
+      const name=find(/user\s*name|^name$|^\s*name/i);const wwid=find(/wwid|user\s*id/i);const dept=find(/dept|department/i);
+      if(!userMap[ph])userMap[ph]={userName:'',userId:'',department:''};
+      if(name)userMap[ph].userName=name;if(wwid)userMap[ph].userId=String(wwid).toLowerCase();if(dept&&departments.includes(dept))userMap[ph].department=dept;added++;});});
+  saveUserMap();renderUsers();reapplyUsersEverywhere();toast('Imported mapping for '+added+' rows');e.target.value='';};
+
+/* ============================ Navigation ============================ */
+const VIEW_META={dashboard:['Dashboard','Overview of all Smart billing data'],import:['Import PDFs','Scan a folder and extract billing data'],grid:['Data Grid','Every invoice — click a row to edit'],preview:['Billing Preview','Inspect a single invoice'],reports:['Reports','Summaries by month, quarter, year, department'],analytics:['Analytics','Trends and top lists'],phones:['Phone Numbers','Per-line totals + full history'],charts:['Charts','Visual breakdowns'],settings:['Settings & Appearance','Themes, departments, user links'],backup:['Backup & Restore','Export or restore your data'],about:['Help & About','How the system works']};
+let currentView='dashboard';
+function setView(v){currentView=v;document.querySelectorAll('.view').forEach(s=>s.classList.remove('active'));document.getElementById('v-'+v).classList.add('active');
+  document.querySelectorAll('#nav a').forEach(a=>a.classList.toggle('active',a.dataset.view===v));
+  document.getElementById('viewTitle').textContent=VIEW_META[v][0];document.getElementById('viewSub').textContent=VIEW_META[v][1];
+  if(v==='reports'){renderReportDeptOptions();renderReport();}if(v==='analytics')renderAnalytics();if(v==='charts')renderCharts();
+  if(v==='settings'){renderDeptUI();renderUsers();renderAuthUI();}if(v==='backup'){updateBackupInfo();renderPubMonths();ghFillForm();}if(v==='phones')renderPhones();}
+document.querySelectorAll('#nav a').forEach(a=>a.onclick=()=>setView(a.dataset.view));
+
+/* ============================ Folder pickers ============================ */
+document.getElementById('btnPickFolder').onclick=()=>document.getElementById('folderInput').click();
+document.getElementById('btnQuickImport').onclick=()=>{setView('import');document.getElementById('folderInput').click();};
+document.getElementById('dropzone').onclick=()=>document.getElementById('folderInput').click();
+document.getElementById('folderInput').onchange=e=>{const files=e.target.files;[...files].forEach(f=>fileHandles[f.webkitRelativePath||f.name]=f);runImport(files);};
+document.getElementById('btnPickFS').onclick=async()=>{if(!window.showDirectoryPicker)return toast('Not supported here — use Select Folder');
+  try{const dir=await window.showDirectoryPicker();const files=[];await walkFS(dir,'',files);files.forEach(f=>fileHandles[f.webkitRelativePath||f.name]=f);runImport(files);}catch(err){if(err.name!=='AbortError')toast('Cancelled');}};
+async function walkFS(dir,prefix,out){for await(const[name,h]of dir.entries()){if(h.kind==='file'){if(/\.pdf$/i.test(name)){const f=await h.getFile();try{Object.defineProperty(f,'webkitRelativePath',{value:prefix+name});}catch(e){}out.push(f);}}else if(h.kind==='directory'){await walkFS(h,prefix+name+'/',out);}}}
+const dz=document.getElementById('dropzone');
+['dragover','dragenter'].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.add('hot');}));
+['dragleave','drop'].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.remove('hot');}));
+dz.addEventListener('drop',async e=>{const items=[...e.dataTransfer.items].map(i=>i.webkitGetAsEntry&&i.webkitGetAsEntry()).filter(Boolean);const files=[];for(const it of items)await walkEntry(it,'',files);files.forEach(f=>fileHandles[f.webkitRelativePath||f.name]=f);runImport(files);});
+function walkEntry(entry,prefix,out){return new Promise(res=>{if(entry.isFile){entry.file(f=>{if(/\.pdf$/i.test(f.name)){try{Object.defineProperty(f,'webkitRelativePath',{value:prefix+f.name});}catch(e){}out.push(f);}res();});}else if(entry.isDirectory){const rd=entry.createReader();rd.readEntries(async ents=>{for(const en of ents)await walkEntry(en,prefix+entry.name+'/',out);res();});}else res();});}
+
+/* ============================ Search + shortcuts + toast ============================ */
+document.getElementById('globalSearch').addEventListener('input',()=>{if(currentView!=='grid')setView('grid');gridPage=1;renderGrid();});
+document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key==='k'){e.preventDefault();document.getElementById('globalSearch').focus();}if(e.key==='Escape')closeEdit();});
+let toastT;function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),3400);}
+
+/* ============================ Crypto (WebCrypto: AES-GCM + PBKDF2 envelope) ============================ */
+const te=new TextEncoder(),td=new TextDecoder();
+function b64(buf){let s='';const b=new Uint8Array(buf);for(let i=0;i<b.length;i++)s+=String.fromCharCode(b[i]);return btoa(s);}
+function ub64(s){return Uint8Array.from(atob(s),c=>c.charCodeAt(0));}
+async function deriveKEK(pass,salt){const bk=await crypto.subtle.importKey('raw',te.encode(pass),'PBKDF2',false,['deriveKey','deriveBits']);
+  return crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:150000,hash:'SHA-256'},bk,{name:'AES-GCM',length:256},false,['encrypt','decrypt']);}
+async function deriveBits(pass,salt){const bk=await crypto.subtle.importKey('raw',te.encode(pass),'PBKDF2',false,['deriveBits']);
+  return b64(await crypto.subtle.deriveBits({name:'PBKDF2',salt,iterations:150000,hash:'SHA-256'},bk,256));}
+async function importAES(raw){return crypto.subtle.importKey('raw',raw,{name:'AES-GCM'},false,['encrypt','decrypt']);}
+async function aesEnc(key,str){const iv=crypto.getRandomValues(new Uint8Array(12));const ct=await crypto.subtle.encrypt({name:'AES-GCM',iv},key,te.encode(str));return{iv:b64(iv),ct:b64(ct)};}
+async function aesDec(key,ivB,ctB){const pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:ub64(ivB)},key,ub64(ctB));return td.decode(pt);}
+async function wrapDK(rawDK,pass){const salt=crypto.getRandomValues(new Uint8Array(16));const kek=await deriveKEK(pass,salt);const iv=crypto.getRandomValues(new Uint8Array(12));const ct=await crypto.subtle.encrypt({name:'AES-GCM',iv},kek,rawDK);return{salt:b64(salt),iv:b64(iv),ct:b64(ct)};}
+async function unwrapDK(w,pass){const kek=await deriveKEK(pass,ub64(w.salt));const raw=await crypto.subtle.decrypt({name:'AES-GCM',iv:ub64(w.iv)},kek,ub64(w.ct));return importAES(raw);}
+
+/* ============================ Auth + roles ============================ */
+let MODE=null,VIEWER_DEPT=null,ADMIN_PASS=null;
+function authCfg(){return JSON.parse(localStorage.getItem('sbms_auth')||'{"depts":{}}');}
+function saveAuth(c){localStorage.setItem('sbms_auth',JSON.stringify(c));}
+async function setAdminPassword(pass){const c=authCfg();const salt=crypto.getRandomValues(new Uint8Array(16));c.admin={salt:b64(salt),verify:await deriveBits(pass,salt)};saveAuth(c);}
+async function verifyAdmin(pass){const c=authCfg();if(!c.admin)return false;return (await deriveBits(pass,ub64(c.admin.salt)))===c.admin.verify;}
+function deptPass(d){return (authCfg().depts||{})[d]||'';}
+
+function initAuthUI(){
+  const sel=document.getElementById('loginRole');
+  sel.innerHTML=`<option value="admin">Administrator (full access)</option>`+departments.map(d=>`<option value="${escAttr(d)}">${d} — department view</option>`).join('');
+  document.getElementById('loginNote').innerHTML = authCfg().admin ? 'Department viewers see only their own data. Passwords are set by the administrator.' : '<b>First run:</b> choose an Administrator password now — it will be saved on this machine.';
+}
+function showLogin(){document.getElementById('loginOverlay').classList.add('show');document.getElementById('loginPass').focus();}
+function loginErr(m){document.getElementById('loginErr').textContent=m||'';}
+document.getElementById('loginPass').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('loginBtn').click();});
+document.getElementById('loginBtn').onclick=async()=>{
+  const role=document.getElementById('loginRole').value;const pass=document.getElementById('loginPass').value;loginErr('');
+  if(role==='admin'){
+    if(!authCfg().admin){if(pass.length<4){loginErr('Choose a password (min 4 characters).');return;}await setAdminPassword(pass);ADMIN_PASS=pass;await enterAdmin();}
+    else if(await verifyAdmin(pass)){ADMIN_PASS=pass;await enterAdmin();}
+    else loginErr('Wrong administrator password.');
+  }else{
+    document.getElementById('loginBtn').textContent='Loading…';
+    try{const recs=await loadPublished(role,pass);if(!recs.length){loginErr('No published data for '+role+' yet (or wrong password).');}
+      else{enterViewer(role,recs,pass);}}
+    catch(e){loginErr('Wrong password, or no published data found.');}
+    document.getElementById('loginBtn').textContent='Sign in';
+  }
+};
+async function enterAdmin(){MODE='admin';document.body.classList.remove('viewer');document.getElementById('loginOverlay').classList.remove('show');
+  document.getElementById('roleBadge').textContent='👑 Administrator';
+  sessionStorage.setItem('sbms_session',JSON.stringify({role:'admin',ap:ADMIN_PASS||''}));
+  renderAuthUI();renderPubMonths();await refreshAll();renderUsers();updateBackupInfo();document.getElementById('loginPass').value='';}
+function enterViewer(dept,recs,pass){MODE='viewer';VIEWER_DEPT=dept;document.body.classList.add('viewer');document.getElementById('loginOverlay').classList.remove('show');
+  document.getElementById('roleBadge').textContent='👁 '+dept;
+  sessionStorage.setItem('sbms_session',JSON.stringify({role:dept,pass}));
+  DATA=recs;renderViews();setView('dashboard');document.getElementById('loginPass').value='';}
+document.getElementById('logoutBtn').onclick=()=>{sessionStorage.removeItem('sbms_session');location.reload();};
+
+/* ============================ Viewer: load encrypted published data ============================ */
+async function loadPublished(dept,pass){
+  const idx=await fetch('./data/index.json',{cache:'no-store'}).then(r=>r.ok?r.json():null).catch(()=>null);
+  if(!idx||!idx.months)throw new Error('no index');
+  let out=[];
+  for(const mo of idx.months){
+    const file=await fetch('./data/'+mo+'.json',{cache:'no-store'}).then(r=>r.ok?r.json():null).catch(()=>null);
+    if(!file||!file.depts)continue;const entry=file.depts[dept];if(!entry||!entry.keys[dept])continue;
+    const dk=await unwrapDK(entry.keys[dept],pass); // throws on wrong password
+    out=out.concat(JSON.parse(await aesDec(dk,entry.iv,entry.ct)));
+  }
+  return out;
+}
+
+/* ============================ Admin: passwords UI + publish ============================ */
+function renderAuthUI(){
+  const c=authCfg();const box=document.getElementById('deptPw');if(!box)return;
+  box.innerHTML=departments.map(d=>`<label class="fld">${d}<input class="inp dpw" data-d="${escAttr(d)}" type="password" value="${escAttr((c.depts||{})[d]||'')}" placeholder="set password"></label>`).join('');
+  document.getElementById('authStatus').textContent=c.admin?'Admin password set. '+Object.keys(c.depts||{}).filter(k=>c.depts[k]).length+' department passwords set.':'No admin password yet.';
+}
+document.getElementById('btnSaveAuth').onclick=async()=>{
+  const a=document.getElementById('pwAdmin').value,a2=document.getElementById('pwAdmin2').value;
+  if(a){if(a!==a2){toast('Admin passwords do not match');return;}await setAdminPassword(a);ADMIN_PASS=a;sessionStorage.setItem('sbms_session',JSON.stringify({role:'admin',ap:a}));}
+  const c=authCfg();c.depts=c.depts||{};document.querySelectorAll('#deptPw .dpw').forEach(i=>{c.depts[i.dataset.d]=i.value;});saveAuth(c);
+  document.getElementById('pwAdmin').value='';document.getElementById('pwAdmin2').value='';renderAuthUI();toast('Passwords saved (this machine only)');
+};
+function monthsInData(){return [...new Set(DATA.filter(r=>r.year&&r.month).map(r=>r.year+'-'+String(r.month).padStart(2,'0')))].sort();}
+function renderPubMonths(){const s=document.getElementById('pubMonth');if(!s)return;s.innerHTML=monthsInData().map(m=>`<option>${m}</option>`).join('')||'<option value="">— no data —</option>';}
+function cleanRec(r){const o={};['userId','userName','department','mobile','invoiceNumber','accountNumber','customer','company','invoiceDate','billingPeriod','year','month','quarter','currentCharges','prevAmountDue','remainingBalance','totalAmountDue','planCharge','deviceCost','deviceTerm','discounts','vat','creditLimit','dueDate','invoiceFolder','invoiceFile','status'].forEach(k=>{if(r[k]!=null&&r[k]!=='')o[k]=r[k];});return o;}
+async function buildMonthFile(mo){
+  if(!ADMIN_PASS){toast('Enter admin password (Settings → Access) first');return null;}
+  applyUsers(DATA);
+  const recs=DATA.filter(r=>(r.year+'-'+String(r.month).padStart(2,'0'))===mo);
+  const groups={};recs.forEach(r=>{const d=r.department||'__unassigned__';(groups[d]=groups[d]||[]).push(cleanRec(r));});
+  const depts={};
+  for(const d in groups){
+    const rawDK=crypto.getRandomValues(new Uint8Array(32));const dk=await importAES(rawDK);
+    const enc=await aesEnc(dk,JSON.stringify(groups[d]));
+    const keys={__admin__:await wrapDK(rawDK,ADMIN_PASS)};
+    if(d!=='__unassigned__'&&deptPass(d))keys[d]=await wrapDK(rawDK,deptPass(d));
+    depts[d]={iv:enc.iv,ct:enc.ct,keys};
+  }
+  return {month:mo,generated:new Date().toISOString(),depts};
+}
+document.getElementById('btnPubMonth').onclick=async()=>{const mo=document.getElementById('pubMonth').value;if(!mo)return;const f=await buildMonthFile(mo);if(!f)return;download(mo+'.json',JSON.stringify(f),'application/json');document.getElementById('pubStatus').textContent='Exported '+mo+'.json — move it into <repo>/data/ and commit.';};
+document.getElementById('btnPubAll').onclick=async()=>{const ms=monthsInData();if(!ms.length)return;for(const mo of ms){const f=await buildMonthFile(mo);if(f){download(mo+'.json',JSON.stringify(f),'application/json');await new Promise(r=>setTimeout(r,400));}}exportIndexFile();document.getElementById('pubStatus').textContent='Exported '+ms.length+' month files + index.json.';};
+document.getElementById('btnPubIndex').onclick=()=>exportIndexFile();
+function exportIndexFile(){const file={generated:new Date().toISOString(),months:monthsInData(),departments};download('index.json',JSON.stringify(file,null,2),'application/json');document.getElementById('pubStatus').textContent='Exported index.json — commit it to <repo>/data/.';}
+
+/* ============================ One-click GitHub Sync ============================ */
+function ghCfg(){return JSON.parse(localStorage.getItem('sbms_gh')||'{}');}
+function saveGh(c){localStorage.setItem('sbms_gh',JSON.stringify(c));}
+function ghHeaders(token){return{'Authorization':'Bearer '+token,'Accept':'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28'};}
+function ghUrl(o,r,path,ref){let u=`https://api.github.com/repos/${o}/${r}/contents/`+path.split('/').map(encodeURIComponent).join('/');if(ref)u+='?ref='+encodeURIComponent(ref);return u;}
+async function ghGetSha(o,r,path,branch,token){const res=await fetch(ghUrl(o,r,path,branch),{headers:ghHeaders(token)});
+  if(res.status===200){return (await res.json()).sha;}if(res.status===404)return null;throw new Error('GET '+res.status+' '+(await res.text()).slice(0,120));}
+async function ghPut(o,r,path,contentStr,message,branch,token,sha){const body={message,content:b64(te.encode(contentStr)),branch};if(sha)body.sha=sha;
+  const res=await fetch(ghUrl(o,r,path),{method:'PUT',headers:ghHeaders(token),body:JSON.stringify(body)});
+  if(!res.ok)throw new Error('PUT '+res.status+' '+(await res.text()).slice(0,160));return res.json();}
+function ghFillForm(){const g=ghCfg();['Owner','Repo','Branch','Path','Token'].forEach(k=>{const el=document.getElementById('gh'+k);if(el)el.value=g[k.toLowerCase()]||(k==='Branch'?'main':k==='Path'?'data':'');});}
+function ghReadForm(){const g={owner:ghv('ghOwner'),repo:ghv('ghRepo'),branch:ghv('ghBranch')||'main',path:(ghv('ghPath')||'data').replace(/\/+$/,''),token:ghv('ghToken')};return g;}
+function ghv(id){return (document.getElementById(id).value||'').trim();}
+document.getElementById('btnGhSave').onclick=()=>{saveGh(ghReadForm());toast('GitHub settings saved (this machine only)');document.getElementById('ghStatus').textContent='Saved.';};
+document.getElementById('btnGhClear').onclick=()=>{const g=ghCfg();g.token='';saveGh(g);document.getElementById('ghToken').value='';toast('Token cleared');};
+document.getElementById('btnGhTest').onclick=async()=>{const g=ghReadForm();const st=document.getElementById('ghStatus');if(!g.owner||!g.repo||!g.token){st.textContent='Enter owner, repo and token first.';return;}
+  st.textContent='Testing…';try{const res=await fetch(`https://api.github.com/repos/${g.owner}/${g.repo}`,{headers:ghHeaders(g.token)});
+    if(res.ok){const j=await res.json();st.innerHTML=`<span class="ok">✓ Connected to ${j.full_name}${j.private?' (private)':''}. Default branch: ${j.default_branch}.</span>`;}
+    else st.innerHTML=`<span class="err">✗ ${res.status} — check owner/repo and that the token has Contents access to this repo.</span>`;}catch(e){st.innerHTML=`<span class="err">✗ ${e.message}</span>`;}};
+async function syncNow(){
+  const g=ghReadForm();const st=document.getElementById('ghStatus');
+  if(!g.owner||!g.repo||!g.token){toast('Set repo + token in Backup → Sync first');setView('backup');return;}
+  if(!ADMIN_PASS){toast('Enter admin password (Settings → Access) first');return;}
+  saveGh(g);const months=monthsInData();st.textContent='Building & encrypting '+months.length+' month(s)…';
+  const files=[['index.json',JSON.stringify({generated:new Date().toISOString(),months,departments},null,2)]];
+  for(const mo of months){const f=await buildMonthFile(mo);if(f)files.push([mo+'.json',JSON.stringify(f)]);}
+  let done=0,failed=0,log='';
+  for(const [name,content] of files){const path=g.path+'/'+name;
+    try{const sha=await ghGetSha(g.owner,g.repo,path,g.branch,g.token);await ghPut(g.owner,g.repo,path,content,'Update '+name+' via Smart Billing',g.branch,g.token,sha);done++;st.textContent=`Syncing… ${done}/${files.length} — ${name}`;}
+    catch(e){failed++;log+=`<div class="err">✗ ${name}: ${e.message}</div>`;}
+  }
+  st.innerHTML=`<b>Sync complete —</b> ${done} file(s) pushed to <b>${g.owner}/${g.repo}@${g.branch}/${g.path}</b>${failed?`, ${failed} failed`:''}.`+log;
+  toast(failed?`Sync: ${done} ok, ${failed} failed`:`Synced ${done} files to GitHub`);
+}
+document.getElementById('btnGhSync').onclick=syncNow;
+document.getElementById('btnTopSync').onclick=syncNow;
+
+/* ============================ Boot ============================ */
+async function refreshViewsOnly(){renderViews();}
+(async function boot(){applySettings();buildSwatches();applySettings();renderDeptUI();
+  await openDB();document.getElementById('dbInfo').textContent='IndexedDB ready';
+  try{await loadLib('chart');}catch(e){}
+  initAuthUI();
+  const sess=JSON.parse(sessionStorage.getItem('sbms_session')||'null');
+  if(sess&&sess.role==='admin'){ADMIN_PASS=sess.ap||null;await enterAdmin();}
+  else if(sess&&sess.role&&sess.pass){try{const recs=await loadPublished(sess.role,sess.pass);if(recs.length){enterViewer(sess.role,recs,sess.pass);}else showLogin();}catch(e){showLogin();}}
+  else showLogin();
+})();
+</script>
+</body>
+</html>

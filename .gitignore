@@ -1,0 +1,15 @@
+# Keep the ~1.9 GB of Smart billing PDFs OUT of the GitHub repo.
+# The app reads them from your local folder — they don't belong in Git.
+2025/
+2026/
+Billing Statement/
+*.pdf
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Local-only PII / private exports — never commit
+seed-usermap.js
+*backup*.json
