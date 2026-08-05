@@ -106,9 +106,10 @@ thead th:hover{color:var(--text)}
 thead th.asc::after{content:" ↑";color:var(--accent)}thead th.desc::after{content:" ↓";color:var(--accent)}
 thead th.drag{outline:2px dashed var(--accent);outline-offset:-2px}
 thead th.num{text-align:right}
-.clock{display:flex;flex-direction:column;align-items:flex-end;line-height:1.15;user-select:none}
-.clock .ck-time{font-weight:800;font-size:20px;color:var(--text);letter-spacing:.5px}
-.clock .ck-date{font-size:12px;color:var(--muted);font-weight:600}
+tfoot td{padding-top:18px!important;padding-bottom:18px!important;border-top:2px solid var(--border)}
+.clock{margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;line-height:1.2;user-select:none;white-space:nowrap}
+.clock .ck-time{font-weight:800;font-size:22px;color:var(--text);letter-spacing:.5px}
+.clock .ck-date{font-size:13px;color:var(--muted);font-weight:600}
 body.restricted .fullOnly{display:none!important}
 tbody td{padding:calc(var(--grid-density)) 12px;border-bottom:1px solid var(--border)}
 tbody tr:nth-child(even){background:var(--row-alt)}tbody tr:hover{background:var(--hover)}
@@ -208,7 +209,7 @@ body.collapsed #userMenu .userchip{justify-content:center}
       <div class="nav-group">Monitor</div>
       <a data-view="dashboard" class="active"><span class="ic">▦</span> Dashboard</a>
       <a data-view="grid"><span class="ic">▤</span> Data Grid <span class="badge" id="navCount">0</span></a>
-      <a data-view="preview" class="adminOnly"><span class="ic">◈</span> Billing Preview</a>
+      <a data-view="preview" class="adminOnly"><span class="ic">◈</span> Billing Info</a>
       <div class="nav-group">Insights</div>
       <a data-view="reports"><span class="ic">▣</span> Reports</a>
       <a data-view="analytics"><span class="ic">◔</span> Analytics</a>
@@ -257,7 +258,7 @@ body.collapsed #userMenu .userchip{justify-content:center}
             <select class="inp" id="fltQuarter"><option value="">All Quarters</option></select>
             <select class="inp" id="fltDept"><option value="">All Depts</option></select>
             <select class="inp" id="fltPhone"><option value="">All Phone #</option></select>
-            <input class="inp" id="fltSearch" placeholder="Filter…" style="min-width:150px" />
+            <input class="inp" id="fltSearch" name="sbms_flt_71" placeholder="Filter…" style="min-width:150px" readonly onfocus="this.removeAttribute('readonly')" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore data-form-type="other" />
             <div class="spacer"></div>
             <button class="btn sm adminOnly fullOnly" id="btnAddRow">＋ Add</button>
             <button class="btn sm" id="btnExportXlsx">⬇ Excel</button>
@@ -285,7 +286,7 @@ body.collapsed #userMenu .userchip{justify-content:center}
           </div>
           <div class="panel" style="margin-top:0">
             <h3>All invoices</h3><div class="hint">Click any invoice to see its parsed fields on the left.</div>
-            <input class="inp" id="previewSearch" placeholder="Search list…" style="width:100%;margin:4px 0 8px"/>
+            <input class="inp" id="previewSearch" name="sbms_pv_82" placeholder="Search list…" style="width:100%;margin:4px 0 8px" readonly onfocus="this.removeAttribute('readonly')" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore data-form-type="other"/>
             <div class="list-invoices" id="previewList" style="max-height:70vh"></div>
           </div>
         </div>
@@ -322,7 +323,7 @@ body.collapsed #userMenu .userchip{justify-content:center}
       <!-- PHONES -->
       <section class="view" id="v-phones">
         <div class="panel">
-          <div class="row"><h3 style="margin:0">☎ Phone Numbers</h3><div class="spacer"></div><input class="inp" id="phoneSearch" placeholder="Search number / user / dept…"/></div>
+          <div class="row"><h3 style="margin:0">☎ Phone Numbers</h3><div class="spacer"></div><input class="inp" id="phoneSearch" name="sbms_ph_63" placeholder="Search number / user / dept…" readonly onfocus="this.removeAttribute('readonly')" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore data-form-type="other"/></div>
           <div class="hint">Table 1 — lifetime totals per line. Click a row to load its full billing history below.</div>
           <div class="tablewrap" style="max-height:42vh;margin-top:8px">
             <table><thead><tr>
@@ -383,7 +384,7 @@ body.collapsed #userMenu .userchip{justify-content:center}
           <h3>👤 Users — link phone → User ID / Name / Department</h3>
           <div class="hint">Linked info shows in Reports, Phone Numbers, Data Grid and Billing Preview. Seeded from your Excel mapping; edit anytime. You can also import an Excel with columns like MIN/Phone, User Name/Name, WWID/User ID, Department.</div>
           <div class="row" style="margin-bottom:10px">
-            <input class="inp" id="userSearch" placeholder="Search phone / name / id / dept…" style="min-width:220px">
+            <input class="inp" id="userSearch" name="sbms_us_44" placeholder="Search phone / name / id / dept…" style="min-width:220px" readonly onfocus="this.removeAttribute('readonly')" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore data-form-type="other">
             <div class="spacer"></div>
             <button class="btn sm fullOnly" id="btnImportMap">⬆ Import mapping (Excel)</button>
             <input type="file" id="mapInput" accept=".xlsx,.xls,.csv" style="display:none">
@@ -406,7 +407,7 @@ body.collapsed #userMenu .userchip{justify-content:center}
       <section class="view" id="v-backup">
         <div class="panel adminOnly">
           <h3>⤓ Import Smart Billing Invoices</h3>
-          <div class="hint">Select your <b>3. Smart Billing Invoices</b> folder. Every sub-folder is scanned recursively, each PDF is read and parsed in-browser (all Smart layouts, old &amp; the new May-2026 unified invoice). Re-importing merges/updates by phone + billing month.</div>
+          <div class="hint">Select your <b>3. Smart Billing Invoices</b> folder. Every sub-folder is scanned recursively, each PDF is read and parsed in-browser (all Smart layouts, old &amp; the new May-2026 unified invoice). <b>Scanned / image-only PDFs are read with built-in OCR</b> when the box below is ticked (slower; needs internet the first time). Re-importing merges/updates by phone + billing month.</div>
           <div class="row" style="margin-bottom:14px">
             <button class="btn primary" id="btnPickFolder"><span>📁</span> Select Folder</button>
             <button class="btn" id="btnPickFS" title="File System Access API (rename/delete)"><span>🗂️</span> Select Folder (advanced)</button>
@@ -414,6 +415,7 @@ body.collapsed #userMenu .userchip{justify-content:center}
             <select class="inp" id="dupMode" title="Duplicate handling">
               <option value="merge">Duplicates: Merge / update (recommended)</option><option value="keepboth">Duplicates: Keep both</option>
             </select>
+            <label class="inp" style="display:flex;align-items:center;gap:7px;cursor:pointer" title="Read scanned/image-only PDFs with OCR (slower, needs internet the first time)"><input type="checkbox" id="ocrMode" checked style="width:16px;height:16px"> OCR scanned PDFs</label>
           </div>
           <div class="drop" id="dropzone"><div class="big">📥</div><div><b>Drop a folder here</b> or click <b>Select Folder</b></div>
             <div class="mini" style="margin-top:6px">Reads *.pdf recursively · User names/departments auto-linked from your mapping</div></div>
@@ -509,6 +511,7 @@ const LIBS={
   pdfw:{local:'./lib/pdf.worker.min.js',cdn:'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'},
   chart:{local:'./lib/chart.umd.min.js',cdn:'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js'},
   xlsx:{local:'./lib/xlsx.full.min.js',cdn:'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'},
+  tesseract:{local:'./lib/tesseract.min.js',cdn:'https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.1.1/tesseract.min.js'},
 };
 function exists(u){return fetch(u,{method:'HEAD'}).then(r=>r.ok).catch(()=>false);}
 function loadScript(src){return new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.onload=()=>res(src);s.onerror=()=>rej(src);document.head.appendChild(s);});}
@@ -556,6 +559,7 @@ function recScore(r){let s=0;['invoiceNumber','invoiceDate','totalAmountDue','cu
 function num(s){if(s==null)return null;let t=String(s).trim();let neg=false;
   if(/CR\b/i.test(t))neg=true;if(/^\(.*\)$/.test(t.replace(/CR/ig,'').trim()))neg=true;
   const n=parseFloat(t.replace(/,/g,'').replace(/[^\d.\-]/g,''));if(isNaN(n))return null;return neg?-Math.abs(n):n;}
+function numLoose(s){if(s==null)return null;const neg=/^[\s]*[-~(]/.test(s);const n=parseFloat(String(s).replace(/[^\d.]/g,''));return isNaN(n)?null:(neg?-Math.abs(n):n);}
 function fm(t,re){const m=t.match(re);return m?m[1].trim():null;}
 function quarterOf(m){return m?('Q'+Math.ceil(m/3)):null;}
 function extractCustomer(t){
@@ -615,6 +619,45 @@ async function extractText(file){
 function reconstruct(items){const lines=[];items.forEach(it=>{const y=it.transform[5];const x=it.transform[4];const h=it.height||3;const tol=Math.max(2.5,h*0.6);
   let l=lines.find(l=>Math.abs(l.y-y)<tol);if(!l){l={y,parts:[]};lines.push(l);}l.parts.push({x,s:it.str});});
   lines.sort((a,b)=>b.y-a.y);return lines.map(l=>l.parts.sort((a,b)=>a.x-b.x).map(p=>p.s).join(' ').replace(/\s+/g,' ').trim()).join('\n');}
+/* ---- Built-in OCR for scanned / image-only PDFs (Tesseract.js) ---- */
+let ocrWorker=null,ocrReady=false;
+async function ensureOCR(){
+  if(ocrReady)return true;
+  await loadLib('tesseract');
+  if(!window.Tesseract||!Tesseract.createWorker)throw new Error('OCR engine could not load (needs internet the first time it runs).');
+  ocrWorker=await Tesseract.createWorker('eng');
+  ocrReady=true;return true;
+}
+async function ocrPdf(file){
+  await ensurePdfjs();await ensureOCR();
+  let buf=await file.arrayBuffer();
+  const pdf=await window.pdfjsLib.getDocument({data:buf,disableAutoFetch:true,disableStream:true}).promise;
+  let out='';const maxp=Math.min(pdf.numPages,3);
+  try{
+    for(let p=1;p<=maxp;p++){
+      const page=await pdf.getPage(p);
+      const vp=page.getViewport({scale:300/72});           // ~300 dpi render
+      const cv=document.createElement('canvas');cv.width=Math.floor(vp.width);cv.height=Math.floor(vp.height);
+      const ctx=cv.getContext('2d',{willReadFrequently:true});ctx.fillStyle='#fff';ctx.fillRect(0,0,cv.width,cv.height);
+      await page.render({canvasContext:ctx,viewport:vp}).promise;
+      const{data:{text}}=await ocrWorker.recognize(cv);
+      out+='\n'+text;
+      cv.width=cv.height=0;try{page.cleanup();}catch(e){}
+      if(/Mobile\s*Number/i.test(out)&&/TOTAL AMOUNT DUE/i.test(out)&&/Total Current/i.test(out))break;
+    }
+  } finally{ try{await pdf.destroy();}catch(e){} buf=null; }
+  return out.split('\n').map(l=>l.replace(/\s+/g,' ').trim()).join('\n');   // collapse spacing so tolerant regexes match
+}
+// Fill headline fields the app's strict regexes may miss on noisier OCR text
+function ocrFixups(rec,text,rel){
+  const pm=rel.match(/(09\d{9})/);if(pm)rec.mobile=pm[1];                    // path is authoritative for these
+  if(rec.currentCharges==null){const m=text.match(/Total Current (?:Bill )?Charges[^\d\-~(]*([\d.,; ]*\d\.\d{2})/i);if(m)rec.currentCharges=numLoose(m[1]);}
+  if(rec.remainingBalance==null){const m=text.match(/Remaining Balance from Previous (?:Bill|Invoice)\.?[^\d\-~(]*([\-~(]?[\d.,; ]*\d\.\d{2}\)?)/i);if(m)rec.remainingBalance=numLoose(m[1]);}
+  if(rec.prevAmountDue==null){const m=text.match(/Amount Due from Previous (?:Bill|Invoice)[^\d\-~(]*([\-~(]?[\d.,; ]*\d\.\d{2}\)?)/i);if(m)rec.prevAmountDue=numLoose(m[1]);}
+  if(rec.totalAmountDue==null){const m=text.match(/TOTAL AMOUNT DUE\s*:?[^\d\-~(]*([\-~(]?[\d.,; ]*\d\.\d{2}\)?)/i);if(m)rec.totalAmountDue=numLoose(m[1]);}
+  if(rec.totalAmountDue==null&&rec.remainingBalance!=null&&rec.currentCharges!=null)rec.totalAmountDue=+(rec.remainingBalance+rec.currentCharges).toFixed(2);
+  rec.source='ocr';return rec;
+}
 let importing=false, fileHandles={};
 async function runImport(files){
   if(importing)return;importing=true;await ensurePdfjs();
@@ -625,11 +668,18 @@ async function runImport(files){
   const t0=Date.now();setView('backup');
   for(let i=0;i<pdfs.length;i++){const f=pdfs[i];const rel=(f.webkitRelativePath||f.name);
     try{
-      const{text,hasText}=await extractText(f);
-      if(!hasText){S.img++;document.getElementById('stImg').textContent=S.img;logLine(`<span class="warn">⤺ image/scanned</span> ${rel} (skipped — needs OCR)`,'warn');}
+      let{text,hasText}=await extractText(f);
+      let viaOcr=false;
+      if(!hasText && document.getElementById('ocrMode').checked){
+        logLine(`<span class="mini">🔎 OCR scanning ${rel} …</span>`);
+        await new Promise(r=>setTimeout(r,0));
+        try{const ot=await ocrPdf(f);if(ot&&ot.replace(/\s/g,'').length>20){text=ot;viaOcr=true;}}catch(err){logLine(`<span class="err">OCR failed</span> ${rel} — ${err.message||err}`,'err');}
+      }
+      if(!hasText && !viaOcr){S.img++;document.getElementById('stImg').textContent=S.img;logLine(`<span class="warn">⤺ image/scanned</span> ${rel} (skipped — enable “OCR scanned PDFs”, needs internet)`,'warn');}
       else{
-        const rec=parseSmart(text);
-        if(!rec.mobile){const mm=rel.match(/(09\d{9})/);if(mm)rec.mobile=mm[1];}
+        let rec=parseSmart(text);
+        if(viaOcr)rec=ocrFixups(rec,text,rel);
+        else if(!rec.mobile){const mm=rel.match(/(09\d{9})/);if(mm)rec.mobile=mm[1];}
         if(!rec.year||!rec.month){const ym=deriveYM(rel);if(!rec.year)rec.year=ym.year;if(!rec.month)rec.month=ym.month;}
         if(rec.year&&rec.month)rec.quarter=quarterOf(rec.month);
         if(!rec.mobile && !rec.invoiceNumber && rec.totalAmountDue==null){S.img++;document.getElementById('stImg').textContent=S.img;logLine(`<span class="warn">∅ no data</span> ${rel} (skipped)`,'warn');}
@@ -645,7 +695,7 @@ async function runImport(files){
               if(recScore(rec)>=recScore(prev)){rec.status='new';await dbPut(rec);logLine(`<span class="ok">↺ updated</span> ${rec.mobile} · ${rec.invoiceDate||rec.year+'-'+rec.month} <span class="mini">${f.name}</span>`,'ok');}
               S.dup++;document.getElementById('stDup').textContent=S.dup;}
           }else{rec.id=key;rec.status='new';await dbPut(rec);S.neu++;document.getElementById('stNew').textContent=S.neu;
-            const u=userFor(rec.mobile);logLine(`<span class="ok">✓</span> ${rec.mobile||'??'} ${u.userName?'· '+u.userName:''} · ${rec.invoiceDate||'?'} · ${money(rec.totalAmountDue)} <span class="mini">${f.name}</span>`,'ok');}
+            const u=userFor(rec.mobile);logLine(`<span class="ok">✓</span> ${rec.source==='ocr'?'<span class="mini" style="color:var(--accent)">[OCR]</span> ':''}${rec.mobile||'??'} ${u.userName?'· '+u.userName:''} · ${rec.invoiceDate||'?'} · ${money(rec.totalAmountDue)} <span class="mini">${f.name}</span>`,'ok');}
         }
       }
     }catch(e){S.err++;document.getElementById('stErr').textContent=S.err;logLine(`<span class="err">✗ error</span> ${rel} — ${e.message||e}`,'err');}
@@ -829,9 +879,10 @@ function renderPreviewList(){
   const q=(document.getElementById('previewSearch').value||'').toLowerCase();
   let rows=DATA.filter(r=>!q||JSON.stringify(r).toLowerCase().includes(q)).sort((a,b)=>(a.invoicePath||'').localeCompare(b.invoicePath||''));
   document.getElementById('previewList').innerHTML=rows.slice(0,600).map(r=>`<div class="inv-item ${r.id===previewSel?'active':''}" data-id="${encodeURIComponent(r.id)}">
-    <div class="t">${r.mobile||'??'} ${r.userName?'· '+r.userName:''} · ${money(r.totalAmountDue)}</div>
+    <div class="t">${r.mobile||r.invoiceFile||'(no data)'} ${r.userName?'· '+r.userName:''} · ${money(r.totalAmountDue)}</div>
     <div class="s">${r.invoiceDate||'?'} · ${r.department||'—'} · ${r.invoiceFile||''}</div></div>`).join('')||'<div class="empty">No invoices</div>';
   document.querySelectorAll('#previewList .inv-item').forEach(el=>el.onclick=()=>openPreviewById(decodeURIComponent(el.dataset.id)));
+  if((!previewSel||!DATA.some(r=>r.id===previewSel))&&rows.length)openPreviewById(rows[0].id,true);
 }
 async function openPreviewById(id,keepView){
   const r=DATA.find(x=>x.id===id);if(!r)return;previewSel=id;if(!keepView)setView('preview');
@@ -863,6 +914,7 @@ function renderPhones(){
     return `<tr class="clickable ${k===phoneSel?'sel':''}" data-ph="${k}"><td>${u.userId||'—'}</td><td>${u.userName||'—'}</td><td>${u.department?'<span class=chip-dept>'+u.department+'</span>':'—'}</td><td><b>${k}</b></td></tr>`;
   }).join('')||'<tr><td colspan="4"><div class="empty">No data</div></td></tr>';
   document.querySelectorAll('#phonesBody tr.clickable').forEach(tr=>tr.onclick=()=>{phoneSel=tr.dataset.ph;renderPhones();renderPhoneDetail();});
+  if((!phoneSel||!rows.some(o=>o.k===phoneSel))&&rows.length){phoneSel=rows[0].k;document.querySelectorAll('#phonesBody tr.clickable').forEach(tr=>tr.classList.toggle('sel',tr.dataset.ph===phoneSel));}
   if(phoneSel)renderPhoneDetail();
 }
 function renderPhoneDetail(){
@@ -1015,7 +1067,7 @@ document.getElementById('mapInput').onchange=async e=>{const f=e.target.files[0]
   saveUserMap();renderUsers();reapplyUsersEverywhere();autoSyncSoon();toast('Imported mapping for '+added+' rows — auto-syncing to GitHub…');e.target.value='';};
 
 /* ============================ Navigation ============================ */
-const VIEW_META={dashboard:['Dashboard','Overview of all Smart billing data'],grid:['Data Grid','Every invoice — click a row to edit'],preview:['Billing Preview','Inspect a single invoice'],reports:['Reports','Summaries by month, quarter, year, department'],analytics:['Analytics','Trends and top lists'],phones:['Phone Numbers','Per-line totals + full history'],charts:['Charts','Visual breakdowns'],settings:['Settings & Appearance','Themes, departments, user links'],backup:['Data, Import & Sync','Import PDFs, back up, and publish to GitHub']};
+const VIEW_META={dashboard:['Dashboard','Overview of all Smart billing data'],grid:['Data Grid','Every invoice — click a row to edit'],preview:['Billing Info','Full parsed details of one invoice'],reports:['Reports','Summaries by month, quarter, year, department'],analytics:['Analytics','Trends and top lists'],phones:['Phone Numbers','Per-line totals + full history'],charts:['Charts','Visual breakdowns'],settings:['Settings & Appearance','Themes, departments, user links'],backup:['Data, Import & Sync','Import PDFs, back up, and publish to GitHub']};
 let currentView='dashboard';
 function setView(v){currentView=v;document.querySelectorAll('.view').forEach(s=>s.classList.remove('active'));document.getElementById('v-'+v).classList.add('active');
   document.querySelectorAll('#nav a').forEach(a=>a.classList.toggle('active',a.dataset.view===v));
@@ -1078,7 +1130,7 @@ async function loadPublishedAdmin(mb,idx){let out=[];for(const mo of (idx.months
 
 function initAuthUI(){
   const sel=document.getElementById('loginRole');
-  sel.innerHTML=`<option value="__admin__">Administrator (full access)</option>`+departments.map(d=>`<option value="${escAttr(d)}">${d} — department view</option>`).join('');
+  sel.innerHTML=`<option value="__admin__">Administrator</option>`+departments.map(d=>`<option value="${escAttr(d)}">${d} — department view</option>`).join('');
   updateLoginLabels();
   document.getElementById('loginNote').innerHTML='<b>Administrator</b> — master password <code>R3USMART2026</code> gives full access on any device. A temporary password (if set) gives limited access. <b>Departments</b> use the access code you give them and see only their own data.';
 }
@@ -1113,7 +1165,7 @@ document.getElementById('loginBtn').onclick=async()=>{
 };
 function setUserChip(name,avatar){document.getElementById('uName').textContent=name;document.getElementById('uAva').textContent=avatar;document.getElementById('uWho').textContent=(MODE==='admin'?'Administrator':'Department: '+VIEWER_DEPT);}
 async function enterAdmin(){MODE='admin';document.body.classList.remove('viewer');document.body.classList.toggle('restricted',ADMIN_FULL===false);document.getElementById('loginOverlay').classList.remove('show');
-  setUserChip(ADMIN_FULL===false?'Administrator (limited)':'Administrator','👑');
+  setUserChip('Administrator','👑');
   sessionStorage.setItem('sbms_session',JSON.stringify({role:'admin',pw:ADMIN_PW||'',full:ADMIN_FULL}));
   const local=await dbGetAll();
   if(local.length){DATA=local;applyUsers(DATA);}
@@ -1230,6 +1282,8 @@ async function refreshViewsOnly(){renderViews();}
   await openDB();document.getElementById('dbInfo').textContent='IndexedDB ready';
   try{await loadLib('chart');}catch(e){}
   initAuthUI();
+  // Defend against Chrome auto-filling search/filter boxes (it likes to inject "admin")
+  [200,700,1500,2500].forEach(t=>setTimeout(()=>{['userSearch','phoneSearch','previewSearch','fltSearch'].forEach(id=>{const g=document.getElementById(id);if(g&&g.value){g.value='';}});},t));
   const sess=JSON.parse(sessionStorage.getItem('sbms_session')||'null');
   if(sess&&sess.role==='admin'){
     try{const mb=await masterFromPassword(DEFAULT_PW);const idx=await fetchIndex();let pub=null;
