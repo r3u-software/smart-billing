@@ -105,6 +105,11 @@ thead th{position:sticky;top:0;background:var(--grid-head);text-align:left;paddi
 thead th:hover{color:var(--text)}
 thead th.asc::after{content:" ↑";color:var(--accent)}thead th.desc::after{content:" ↓";color:var(--accent)}
 thead th.drag{outline:2px dashed var(--accent);outline-offset:-2px}
+thead th.num{text-align:right}
+.clock{display:flex;flex-direction:column;align-items:flex-end;line-height:1.15;user-select:none}
+.clock .ck-time{font-weight:800;font-size:20px;color:var(--text);letter-spacing:.5px}
+.clock .ck-date{font-size:12px;color:var(--muted);font-weight:600}
+body.restricted .fullOnly{display:none!important}
 tbody td{padding:calc(var(--grid-density)) 12px;border-bottom:1px solid var(--border)}
 tbody tr:nth-child(even){background:var(--row-alt)}tbody tr:hover{background:var(--hover)}
 tbody tr.clickable{cursor:pointer}tbody tr.sel{background:color-mix(in srgb,var(--accent) 20%,transparent)}
@@ -211,7 +216,7 @@ body.collapsed #userMenu .userchip{justify-content:center}
       <a data-view="charts"><span class="ic">◑</span> Charts</a>
       <div class="nav-group">System</div>
       <a data-view="settings"><span class="ic">⚙</span> Settings &amp; Appearance</a>
-      <a data-view="backup" class="adminOnly"><span class="ic">⛃</span> Data, Import &amp; Sync</a>
+      <a data-view="backup" class="adminOnly fullOnly"><span class="ic">⛃</span> Data, Import &amp; Sync</a>
     </nav>
     <div class="spacer" style="flex:1"></div>
     <div id="userMenu">
@@ -230,7 +235,7 @@ body.collapsed #userMenu .userchip{justify-content:center}
     <div class="topbar">
       <button id="collapseBtn" title="Collapse / expand sidebar">☰</button>
       <div><h1 id="viewTitle">Dashboard</h1><div class="sub" id="viewSub">Overview of all Smart billing data</div></div>
-      <div class="search"><span>🔍</span><input id="globalSearch" name="sbms_q_9137" type="text" readonly onfocus="this.removeAttribute('readonly')" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore data-form-type="other" placeholder="Search phone, invoice #, user, month, amount…" /></div>
+      <div class="clock" id="clock"><div class="ck-time" id="ckTime">—</div><div class="ck-date" id="ckDate">—</div></div>
     </div>
 
     <div class="content">
@@ -254,7 +259,7 @@ body.collapsed #userMenu .userchip{justify-content:center}
             <select class="inp" id="fltPhone"><option value="">All Phone #</option></select>
             <input class="inp" id="fltSearch" placeholder="Filter…" style="min-width:150px" />
             <div class="spacer"></div>
-            <button class="btn sm adminOnly" id="btnAddRow">＋ Add</button>
+            <button class="btn sm adminOnly fullOnly" id="btnAddRow">＋ Add</button>
             <button class="btn sm" id="btnExportXlsx">⬇ Excel</button>
             <button class="btn sm" id="btnResetCols" title="Reset column order">↺ Cols</button>
           </div>
@@ -329,8 +334,8 @@ body.collapsed #userMenu .userchip{justify-content:center}
           <h3>📄 Invoices for <span id="phoneSelLabel" style="color:var(--accent)">— select a number above —</span></h3>
           <div class="tablewrap" style="max-height:42vh;margin-top:8px">
             <table><thead><tr>
-              <th>Invoice Date</th><th>Invoice #</th><th>Account #</th><th>Current</th><th>Prev Bal</th><th>Amount Due</th><th>Plan</th><th>Device</th><th>VAT</th><th>Due Date</th><th>Folder</th>
-            </tr></thead><tbody id="phoneDetailBody"><tr><td colspan="11"><div class="empty">Select a phone number above.</div></td></tr></tbody></table>
+              <th>Invoice Date</th><th>Invoice #</th><th>Account #</th><th class="num">Current</th><th class="num">Prev Bal</th><th class="num">Amount Due</th><th class="num">Plan</th><th class="num">Device</th><th class="num">VAT</th><th>Due Date</th>
+            </tr></thead><tbody id="phoneDetailBody"><tr><td colspan="10"><div class="empty">Select a phone number above.</div></td></tr></tbody></table>
           </div>
         </div>
       </section>
@@ -364,7 +369,7 @@ body.collapsed #userMenu .userchip{justify-content:center}
             <h3>🔐 Access codes</h3>
             <div class="hint">Each department's code is generated <b>automatically from your Administrator password</b> — you don't set them, and they're the same on any device. Give each team its code; members see <b>only their own</b> data. <b>Rotate</b> = fresh codes; <b>Change admin password</b> = new master. After either, click <b>Sync</b>.</div>
             <div id="codesBox"></div>
-            <div class="row" style="margin-top:12px"><button class="btn sm" id="btnRotate">🔄 Rotate</button><button class="btn sm" id="btnAdminKey">🔑 Change password</button></div>
+            <div class="row fullOnly" style="margin-top:12px"><button class="btn sm" id="btnRotate">🔄 Rotate</button><button class="btn sm" id="btnAdminKey">🔑 Change temp password</button></div>
             <div class="mini" id="authStatus" style="margin-top:8px"></div>
           </div>
           <div class="panel" style="margin-top:16px">
@@ -380,9 +385,9 @@ body.collapsed #userMenu .userchip{justify-content:center}
           <div class="row" style="margin-bottom:10px">
             <input class="inp" id="userSearch" placeholder="Search phone / name / id / dept…" style="min-width:220px">
             <div class="spacer"></div>
-            <button class="btn sm" id="btnImportMap">⬆ Import mapping (Excel)</button>
+            <button class="btn sm fullOnly" id="btnImportMap">⬆ Import mapping (Excel)</button>
             <input type="file" id="mapInput" accept=".xlsx,.xls,.csv" style="display:none">
-            <button class="btn sm" id="btnAddUser">＋ Add link</button>
+            <button class="btn sm fullOnly" id="btnAddUser">＋ Add link</button>
           </div>
           <div class="tablewrap" style="max-height:46vh"><table><thead><tr><th>Mobile #</th><th>User Name</th><th>User ID (WWID)</th><th>Department</th><th></th></tr></thead><tbody id="usersBody"></tbody></table></div>
           <div class="mini" style="margin-top:8px">Tip: type a phone that exists in your imported data to link it. Changes apply instantly everywhere.</div>
@@ -720,7 +725,7 @@ const ALLCOLS=[
   ['invoiceDate','Invoice Date'],['month','Mo','n'],['year','Year'],['quarter','Qtr'],
   ['currentCharges','Current','n'],['prevAmountDue','Prev Bal','n'],['remainingBalance','Remain','n'],['totalAmountDue','Amount Due','n'],
   ['planCharge','Plan','n'],['deviceCost','Device','n'],['discounts','Disc','n'],['vat','VAT','n'],['creditLimit','Credit Limit','n'],
-  ['dueDate','Due Date'],['billingPeriod','Billing Period'],['invoiceFolder','Folder'],['invoiceFile','File'],['status','Status']
+  ['dueDate','Due Date'],['billingPeriod','Billing Period'],['invoiceFile','File'],['status','Status']
 ];
 const COLMAP=Object.fromEntries(ALLCOLS.map(c=>[c[0],c]));
 let colOrder=JSON.parse(localStorage.getItem('sbms_colorder')||'null')||ALLCOLS.map(c=>c[0]);
@@ -730,10 +735,10 @@ function cols(){return colOrder.map(k=>COLMAP[k]);}
 let gridSort={col:'invoiceDate',dir:-1},gridPage=1;
 function val(id){return document.getElementById(id).value;}
 function gridFiltered(){
-  let rows=DATA.slice();const y=val('fltYear'),m=val('fltMonth'),q=val('fltQuarter'),dp=val('fltDept'),p=val('fltPhone'),s=val('fltSearch').toLowerCase(),gs=val('globalSearch').toLowerCase();
+  let rows=DATA.slice();const y=val('fltYear'),m=val('fltMonth'),q=val('fltQuarter'),dp=val('fltDept'),p=val('fltPhone'),s=val('fltSearch').toLowerCase();
   if(y)rows=rows.filter(r=>String(r.year)===y);if(m)rows=rows.filter(r=>String(r.month)===m);if(q)rows=rows.filter(r=>r.quarter===q);
   if(dp)rows=rows.filter(r=>r.department===dp);if(p)rows=rows.filter(r=>r.mobile===p);
-  const term=s||gs;if(term)rows=rows.filter(r=>JSON.stringify(r).toLowerCase().includes(term));
+  const term=s;if(term)rows=rows.filter(r=>JSON.stringify(r).toLowerCase().includes(term));
   rows.sort((a,b)=>{let x=a[gridSort.col],z=b[gridSort.col];if(x==null)x='';if(z==null)z='';
     if(typeof x==='number'&&typeof z==='number')return(x-z)*gridSort.dir;
     const nx=parseFloat(x),nz=parseFloat(z);if(!isNaN(nx)&&!isNaN(nz)&&String(x).match(/^[\d.,-]+$/))return(nx-nz)*gridSort.dir;
@@ -742,7 +747,7 @@ function gridFiltered(){
 }
 function renderGrid(){
   const head=document.getElementById('gridHead');
-  head.innerHTML=cols().map(c=>{const cls=c[0]===gridSort.col?(gridSort.dir>0?'asc':'desc'):'';return `<th draggable="true" data-c="${c[0]}" class="${cls}">${c[1]}</th>`;}).join('')+'<th>◈</th>';
+  head.innerHTML=cols().map(c=>{const cls=(c[0]===gridSort.col?(gridSort.dir>0?'asc':'desc'):'')+(c[2]==='n'?' num':'');return `<th draggable="true" data-c="${c[0]}" class="${cls.trim()}">${c[1]}</th>`;}).join('')+'<th>◈</th>';
   head.querySelectorAll('th[data-c]').forEach(th=>{
     th.onclick=e=>{if(th.dataset.dragging)return;const c=th.dataset.c;if(gridSort.col===c)gridSort.dir*=-1;else{gridSort.col=c;gridSort.dir=1;}renderGrid();};
     th.addEventListener('dragstart',e=>{th.dataset.dragging='1';e.dataTransfer.setData('text/plain',th.dataset.c);});
@@ -865,8 +870,8 @@ function renderPhoneDetail(){
   const rows=DATA.filter(r=>r.mobile===phoneSel).sort((a,b)=>(a.year*100+a.month)-(b.year*100+b.month));
   document.getElementById('phoneDetailBody').innerHTML=rows.map(r=>`<tr><td>${r.invoiceDate||'—'}</td><td>${r.invoiceNumber||'—'}</td><td>${r.accountNumber||'—'}</td>
     <td class="num">${money(r.currentCharges)}</td><td class="num">${money(r.prevAmountDue)}</td><td class="num">${money(r.totalAmountDue)}</td>
-    <td class="num">${money(r.planCharge)}</td><td class="num">${money(r.deviceCost)}</td><td class="num">${money(r.vat)}</td><td>${r.dueDate||'—'}</td><td>${r.invoiceFolder||''}</td></tr>`).join('')
-    ||'<tr><td colspan="11"><div class="empty">No invoices for this number</div></td></tr>';
+    <td class="num">${money(r.planCharge)}</td><td class="num">${money(r.deviceCost)}</td><td class="num">${money(r.vat)}</td><td>${r.dueDate||'—'}</td></tr>`).join('')
+    ||'<tr><td colspan="10"><div class="empty">No invoices for this number</div></td></tr>';
 }
 document.getElementById('phoneSearch').addEventListener('input',renderPhones);
 
@@ -889,7 +894,7 @@ function renderReport(){
     let m=map[key];if(!m)m=map[key]={parts,sv:sortVal(r),n:0,cur:0,due:0,vat:0,disc:0,dev:0,prev:0};
     m.n++;m.cur+=r.currentCharges||0;m.due+=r.totalAmountDue||0;m.vat+=r.vat||0;m.disc+=r.discounts||0;m.dev+=r.deviceCost||0;m.prev+=r.prevAmountDue||0;});
   const keys=Object.keys(map).sort((a,b)=>{const A=map[a].sv,B=map[b].sv;if(typeof A==='number'&&typeof B==='number')return A-B;return String(A).localeCompare(String(B));});
-  const th=keyCols.map(c=>`<th>${c[0]}</th>`).join('')+`<th>Invoices</th><th>Current Charges</th><th>Device</th><th>VAT</th><th>Discounts</th><th>Prev Balance</th><th>Total Amount Due</th>`;
+  const th=keyCols.map(c=>`<th>${c[0]}</th>`).join('')+`<th class="num">Invoices</th><th class="num">Current Charges</th><th class="num">Device</th><th class="num">VAT</th><th class="num">Discounts</th><th class="num">Prev Balance</th><th class="num">Total Amount Due</th>`;
   const body=keys.map(k=>{const m=map[k];return `<tr>`+m.parts.map(p=>`<td><b>${p===''?'—':p}</b></td>`).join('')+`<td class="num">${m.n}</td><td class="num">${money(m.cur)}</td><td class="num">${money(m.dev)}</td><td class="num">${money(m.vat)}</td><td class="num">${money(m.disc)}</td><td class="num">${money(m.prev)}</td><td class="num">${money(m.due)}</td></tr>`;}).join('');
   const tot=f=>keys.reduce((a,k)=>a+map[k][f],0);
   const foot=`<tr style="font-weight:800;background:var(--grid-head)"><td>TOTAL</td>`+keyCols.slice(1).map(()=>'<td></td>').join('')+`<td class="num">${data.length}</td>`+['cur','dev','vat','disc','prev','due'].map(f=>`<td class="num">${money(tot(f))}</td>`).join('')+`</tr>`;
@@ -903,7 +908,7 @@ document.getElementById('btnReportXlsx').onclick=async()=>{await loadLib('xlsx')
   const ws=XLSX.utils.table_to_sheet(t);const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Report');XLSX.writeFile(wb,'smart_report.xlsx');};
 
 /* ============================ Analytics ============================ */
-function miniTable(rows,head){return `<div class="tablewrap"><table><thead><tr>${head.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map((c,i)=>`<td class="${i>0?'num':''}">${c==null?'—':c}</td>`).join('')}</tr>`).join('')||`<tr><td colspan="${head.length}"><div class="empty">No data</div></td></tr>`}</tbody></table></div>`;}
+function miniTable(rows,head){return `<div class="tablewrap"><table><thead><tr>${head.map((h,i)=>`<th class="${i>0?'num':''}">${h}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map((c,i)=>`<td class="${i>0?'num':''}">${c==null?'—':c}</td>`).join('')}</tr>`).join('')||`<tr><td colspan="${head.length}"><div class="empty">No data</div></td></tr>`}</tbody></table></div>`;}
 function renderAnalytics(){
   const byMonth={};DATA.forEach(r=>{if(r.year&&r.month){const k=r.year+'-'+String(r.month).padStart(2,'0');byMonth[k]=(byMonth[k]||0)+(r.totalAmountDue||0);}});
   const keys=Object.keys(byMonth).sort();const vals=keys.map(k=>byMonth[k]);const avg=vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:0;
@@ -971,7 +976,7 @@ document.querySelectorAll('#modeToggle button').forEach(b=>b.onclick=()=>{settin
 document.getElementById('setDensity').onchange=e=>{settings.density=e.target.value;saveSettings();applySettings();};
 document.getElementById('setCurrency').oninput=e=>{settings.currency=e.target.value;saveSettings();renderDashboard();renderGrid();renderPhones();};
 
-function renderDeptUI(){document.getElementById('deptPills').innerHTML=departments.map(d=>`<span class="pill">${d}<button data-d="${escAttr(d)}">✕</button></span>`).join('')||'<span class="mini">No departments yet.</span>';
+function renderDeptUI(){const canRemove=ADMIN_FULL!==false;document.getElementById('deptPills').innerHTML=departments.map(d=>`<span class="pill">${d}${canRemove?`<button data-d="${escAttr(d)}">✕</button>`:''}</span>`).join('')||'<span class="mini">No departments yet.</span>';
   document.querySelectorAll('#deptPills .pill button').forEach(b=>b.onclick=()=>{departments=departments.filter(x=>x!==b.dataset.d);saveDepts();renderDeptUI();renderFilters();renderReportDeptOptions();renderUsers();renderAuthUI();initAuthUI();autoSyncSoon();toast('Department removed');});}
 document.getElementById('btnAddDept').onclick=()=>{const v=document.getElementById('newDept').value.trim();if(!v)return;if(!departments.includes(v))departments.push(v);saveDepts();document.getElementById('newDept').value='';renderDeptUI();renderFilters();renderReportDeptOptions();renderUsers();renderAuthUI();initAuthUI();autoSyncSoon();toast('Department added');};
 
@@ -981,14 +986,15 @@ function usersRows(){
   return [...phones].filter(p=>{const u=userFor(p);return !q||p.includes(q)||(u.userName||'').toLowerCase().includes(q)||(u.userId||'').toLowerCase().includes(q)||(u.department||'').toLowerCase().includes(q);}).sort();
 }
 function renderUsers(){
-  const rows=usersRows();
+  const rows=usersRows();const ro=ADMIN_FULL===false;const dis=ro?'disabled':'';
   document.getElementById('usersBody').innerHTML=rows.map(p=>{const u=userFor(p);
     const opts=`<option value="">—</option>`+departments.map(d=>`<option ${u.department===d?'selected':''}>${d}</option>`).join('');
     return `<tr data-p="${p}"><td><b>${p}</b></td>
-      <td><input class="inp uName" style="width:100%" value="${escAttr(u.userName||'')}"></td>
-      <td><input class="inp uId" style="width:100%" value="${escAttr(u.userId||'')}"></td>
-      <td><select class="inp uDept">${opts}</select></td>
-      <td><button class="btn sm uDel" title="Remove link">✕</button></td></tr>`;}).join('')||'<tr><td colspan="5"><div class="empty">No phones yet. Import invoices or add a link.</div></td></tr>';
+      <td><input class="inp uName" style="width:100%" ${dis} value="${escAttr(u.userName||'')}"></td>
+      <td><input class="inp uId" style="width:100%" ${dis} value="${escAttr(u.userId||'')}"></td>
+      <td><select class="inp uDept" ${dis}>${opts}</select></td>
+      <td>${ro?'':'<button class="btn sm uDel" title="Remove link">✕</button>'}</td></tr>`;}).join('')||'<tr><td colspan="5"><div class="empty">No phones yet. Import invoices or add a link.</div></td></tr>';
+  if(ro)return;
   document.querySelectorAll('#usersBody tr[data-p]').forEach(tr=>{const p=tr.dataset.p;
     const save=()=>{setUser(p,{userName:tr.querySelector('.uName').value.trim(),userId:tr.querySelector('.uId').value.trim(),department:tr.querySelector('.uDept').value});reapplyUsersEverywhere();autoSyncSoon();};
     tr.querySelector('.uName').onchange=save;tr.querySelector('.uId').onchange=save;tr.querySelector('.uDept').onchange=save;
@@ -1032,8 +1038,9 @@ dz.addEventListener('drop',async e=>{const items=[...e.dataTransfer.items].map(i
 function walkEntry(entry,prefix,out){return new Promise(res=>{if(entry.isFile){entry.file(f=>{if(/\.pdf$/i.test(f.name)){try{Object.defineProperty(f,'webkitRelativePath',{value:prefix+f.name});}catch(e){}out.push(f);}res();});}else if(entry.isDirectory){const rd=entry.createReader();rd.readEntries(async ents=>{for(const en of ents)await walkEntry(en,prefix+entry.name+'/',out);res();});}else res();});}
 
 /* ============================ Search + shortcuts + toast ============================ */
-document.getElementById('globalSearch').addEventListener('input',()=>{if(currentView!=='grid')setView('grid');gridPage=1;renderGrid();});
-document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key==='k'){e.preventDefault();document.getElementById('globalSearch').focus();}if(e.key==='Escape')closeEdit();});
+function tickClock(){const d=new Date();const t=document.getElementById('ckTime'),dt=document.getElementById('ckDate');if(t)t.textContent=d.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit'});if(dt)dt.textContent=d.toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});}
+tickClock();setInterval(tickClock,1000);
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeEdit();});
 let toastT;function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),3400);}
 
 /* ============================ Crypto (WebCrypto: AES-GCM + PBKDF2 envelope) ============================ */
@@ -1051,7 +1058,8 @@ async function wrapDK(rawDK,pass){const salt=crypto.getRandomValues(new Uint8Arr
 async function unwrapDK(w,pass){const kek=await deriveKEK(pass,ub64(w.salt));const raw=await crypto.subtle.decrypt({name:'AES-GCM',iv:ub64(w.iv)},kek,ub64(w.ct));return importAES(raw);}
 
 /* ============================ Auth + roles (portable admin password) ============================ */
-let MODE=null,VIEWER_DEPT=null,ADMIN_MASTER=null,ROT_SALT=null,ADMIN_PUB=null,ADMIN_PW=null;
+let MODE=null,VIEWER_DEPT=null,ADMIN_MASTER=null,ROT_SALT=null,ADMIN_PUB=null,ADMIN_PW=null,ADMIN_FULL=true;
+const DEFAULT_PW='R3USMART2026';
 const APP_SALT=new TextEncoder().encode('SmartBilling::v3::master');
 async function masterFromPassword(pw){const bk=await crypto.subtle.importKey('raw',te.encode(pw),'PBKDF2',false,['deriveBits']);const bits=await crypto.subtle.deriveBits({name:'PBKDF2',salt:APP_SALT,iterations:200000,hash:'SHA-256'},bk,256);return new Uint8Array(bits);}
 function masterStr(mb){return b64(mb);}
@@ -1064,6 +1072,7 @@ function newRot(){return b64(crypto.getRandomValues(new Uint8Array(6)));}
 function adminCfg(){return JSON.parse(localStorage.getItem('sbms_admincfg')||'{}');}
 async function saveAdminVerify(pw){const salt=crypto.getRandomValues(new Uint8Array(16));localStorage.setItem('sbms_admincfg',JSON.stringify({salt:b64(salt),verify:await deriveBits(pw,salt)}));}
 async function checkAdminVerify(pw){const c=adminCfg();if(!c.verify)return null;return (await deriveBits(pw,ub64(c.salt)))===c.verify;}
+async function tempVerify(pw,idx){let c=adminCfg();if((!c||!c.verify)&&idx&&idx.tempHash)c=idx.tempHash;if(!c||!c.verify)return false;try{return (await deriveBits(pw,ub64(c.salt)))===c.verify;}catch(e){return false;}}
 async function fetchIndex(){try{const r=await fetch('./data/index.json',{cache:'no-store'});return r.ok?await r.json():null;}catch(e){return null;}}
 async function loadPublishedAdmin(mb,idx){let out=[];for(const mo of (idx.months||[])){const f=await fetch('./data/'+mo+'.json',{cache:'no-store'}).then(r=>r.ok?r.json():null).catch(()=>null);if(!f||!f.depts)continue;for(const d in f.depts){const e=f.depts[d];if(!e.keys||!e.keys.__admin__)continue;const dk=await unwrapDK(e.keys.__admin__,masterStr(mb));out=out.concat(JSON.parse(await aesDec(dk,e.iv,e.ct)));}}return out;}
 
@@ -1071,7 +1080,7 @@ function initAuthUI(){
   const sel=document.getElementById('loginRole');
   sel.innerHTML=`<option value="__admin__">Administrator (full access)</option>`+departments.map(d=>`<option value="${escAttr(d)}">${d} — department view</option>`).join('');
   updateLoginLabels();
-  document.getElementById('loginNote').innerHTML='<b>Administrator</b> signs in with the master password (works on any device). <b>Departments</b> use the access code you give them and see only their own data.';
+  document.getElementById('loginNote').innerHTML='<b>Administrator</b> — master password <code>R3USMART2026</code> gives full access on any device. A temporary password (if set) gives limited access. <b>Departments</b> use the access code you give them and see only their own data.';
 }
 function updateLoginLabels(){const admin=document.getElementById('loginRole').value==='__admin__';document.getElementById('loginPass').placeholder=admin?'Administrator password':'Department access code';}
 document.getElementById('loginRole').addEventListener('change',updateLoginLabels);
@@ -1083,21 +1092,15 @@ document.getElementById('loginBtn').onclick=async()=>{
   const btn=document.getElementById('loginBtn');btn.textContent='Signing in…';
   try{
     if(role==='__admin__'){
-      if(pass.length<6){loginErr('Administrator password must be at least 6 characters.');btn.textContent='Sign in';return;}
-      const mb=await masterFromPassword(pass);const idx=await fetchIndex();const lv=await checkAdminVerify(pass);
-      let pub=null,decryptOK=false;
-      if(idx&&idx.months&&idx.months.length){try{pub=await loadPublishedAdmin(mb,idx);decryptOK=true;}catch(e){decryptOK=false;}}
-      if(!decryptOK){
-        const localData=await dbGetAll();
-        if(lv===false){loginErr('Wrong administrator password.');btn.textContent='Sign in';return;}
-        // New device with existing published data that didn't decrypt = wrong password
-        if(lv===null && localData.length===0 && idx && idx.months && idx.months.length){loginErr('Wrong administrator password.');btn.textContent='Sign in';return;}
-        // Otherwise: this is the machine holding the records — allow first-time set / re-key. Re-Sync needed.
-        pub=null;
-        if(lv===null)toast('Set as administrator on this device — remember to Sync to (re)publish under this password.');
-      }
-      if(lv===null)await saveAdminVerify(pass);
-      ADMIN_MASTER=mb;ADMIN_PW=pass;ADMIN_PUB=pub;let rs=(idx&&idx.rotSalt)||rotLocal();if(!rs)rs=newRot();setRot(rs);
+      const idx=await fetchIndex();
+      let full=false,ok=false;
+      if(pass===DEFAULT_PW){full=true;ok=true;}
+      else if(await tempVerify(pass,idx)){full=false;ok=true;}
+      if(!ok){loginErr('Wrong administrator password.');btn.textContent='Sign in';return;}
+      const mb=await masterFromPassword(DEFAULT_PW);
+      let pub=null;
+      if(idx&&idx.months&&idx.months.length){try{pub=await loadPublishedAdmin(mb,idx);}catch(e){pub=null;}}
+      ADMIN_MASTER=mb;ADMIN_PW=pass;ADMIN_FULL=full;ADMIN_PUB=pub;let rs=(idx&&idx.rotSalt)||rotLocal();if(!rs)rs=newRot();setRot(rs);
       if(idx&&idx.departments&&idx.departments.length){departments=idx.departments.slice();saveDepts();initAuthUI();}
       await enterAdmin();
     } else {
@@ -1109,9 +1112,9 @@ document.getElementById('loginBtn').onclick=async()=>{
   btn.textContent='Sign in';
 };
 function setUserChip(name,avatar){document.getElementById('uName').textContent=name;document.getElementById('uAva').textContent=avatar;document.getElementById('uWho').textContent=(MODE==='admin'?'Administrator':'Department: '+VIEWER_DEPT);}
-async function enterAdmin(){MODE='admin';document.body.classList.remove('viewer');document.getElementById('loginOverlay').classList.remove('show');
-  setUserChip('Administrator','👑');
-  sessionStorage.setItem('sbms_session',JSON.stringify({role:'admin',pw:ADMIN_PW||''}));
+async function enterAdmin(){MODE='admin';document.body.classList.remove('viewer');document.body.classList.toggle('restricted',ADMIN_FULL===false);document.getElementById('loginOverlay').classList.remove('show');
+  setUserChip(ADMIN_FULL===false?'Administrator (limited)':'Administrator','👑');
+  sessionStorage.setItem('sbms_session',JSON.stringify({role:'admin',pw:ADMIN_PW||'',full:ADMIN_FULL}));
   const local=await dbGetAll();
   if(local.length){DATA=local;applyUsers(DATA);}
   else if(ADMIN_PUB&&ADMIN_PUB.length){DATA=ADMIN_PUB;rebuildUserMapFromRecords(DATA);applyUsers(DATA);}
@@ -1151,15 +1154,15 @@ async function renderAuthUI(){
   const rows=[];for(const d of departments){const code=await deptCodeFor(ADMIN_MASTER,d);rows.push(`<div class="code-row"><b>${d}</b> <code>${code}</code> <button class="btn sm cpy" data-c="${escAttr(code)}">Copy</button></div>`);}
   box.innerHTML=rows.join('')||'<div class="mini">Add departments first (below).</div>';
   box.querySelectorAll('.cpy').forEach(b=>b.onclick=()=>{try{navigator.clipboard.writeText(b.dataset.c);}catch(e){}toast('Code copied');});
-  document.getElementById('authStatus').textContent='Codes derive from the admin password. Rotate = new codes after Sync.';
+  const c=adminCfg();document.getElementById('authStatus').innerHTML='Master password <code>R3USMART2026</code> always gives full access. '+(c&&c.verify?'A temp (limited) login password is set.':'No temp password set yet.');
 }
-document.getElementById('btnRotate').onclick=async()=>{if(!confirm('Issue brand-new codes for every department? Old codes stop working after you Sync.'))return;setRot(newRot());await renderAuthUI();toast('Codes rotated — click Sync to publish them.');};
+document.getElementById('btnRotate').onclick=async()=>{if(ADMIN_FULL===false){toast('Only the master password can rotate codes');return;}if(!confirm('Issue brand-new codes for every department? Old codes stop working after you Sync.'))return;setRot(newRot());await renderAuthUI();toast('Codes rotated — click Sync to publish them.');};
 document.getElementById('btnAdminKey').onclick=async()=>{
-  const np=prompt('CHANGE the Administrator password.\nEnter a NEW password (min 6 chars). Everyone will need to re-Sync/re-login. Leave blank to cancel:');
-  if(!np||np.length<6){if(np!==null&&np!=='')toast('Password must be at least 6 characters');return;}
-  ADMIN_MASTER=await masterFromPassword(np);ADMIN_PW=np;await saveAdminVerify(np);
-  sessionStorage.setItem('sbms_session',JSON.stringify({role:'admin',pw:np}));
-  await renderAuthUI();toast('Admin password changed — you MUST click Sync now to re-encrypt everything.');
+  if(ADMIN_FULL===false){toast('Only the master password (R3USMART2026) can change this');return;}
+  const np=prompt('Set a TEMPORARY login password for staff.\nThey sign in as Administrator with it but get LIMITED access (no import/sync, no add/remove links, can only add departments).\nThe master password R3USMART2026 always keeps full access.\nEnter a new temp password (min 6 chars), or leave blank to cancel:');
+  if(!np||np.trim().length<6){if(np!==null&&np.trim()!=='')toast('Password must be at least 6 characters');return;}
+  await saveAdminVerify(np.trim());
+  await renderAuthUI();toast('Temp password set — click Sync to make it work on other devices.');
 };
 function monthsInData(){return [...new Set(DATA.filter(r=>r.year&&r.month).map(r=>r.year+'-'+String(r.month).padStart(2,'0')))].sort();}
 function renderPubMonths(){const s=document.getElementById('pubMonth');if(!s)return;s.innerHTML=monthsInData().map(m=>`<option>${m}</option>`).join('')||'<option value="">— no data —</option>';}
@@ -1207,7 +1210,7 @@ async function syncNow(){
   if(!ADMIN_MASTER){toast('Sign in as Administrator first');return;}
   if(!ROT_SALT)setRot(newRot());
   saveGh(g);const months=monthsInData();st.textContent='Building & encrypting '+months.length+' month(s)…';
-  const files=[['index.json',JSON.stringify({generated:new Date().toISOString(),months,departments,rotSalt:ROT_SALT},null,2)]];
+  const _ac=adminCfg();const files=[['index.json',JSON.stringify({generated:new Date().toISOString(),months,departments,rotSalt:ROT_SALT,tempHash:(_ac&&_ac.verify?_ac:null)},null,2)]];
   for(const mo of months){const f=await buildMonthFile(mo);if(f)files.push([mo+'.json',JSON.stringify(f)]);}
   let done=0,failed=0,log='';
   for(const [name,content] of files){const path=g.path+'/'+name;
@@ -1227,13 +1230,11 @@ async function refreshViewsOnly(){renderViews();}
   await openDB();document.getElementById('dbInfo').textContent='IndexedDB ready';
   try{await loadLib('chart');}catch(e){}
   initAuthUI();
-  // Defend against browser auto-filling the search box (which would filter the grid to 0 rows)
-  [300,800,1500].forEach(t=>setTimeout(()=>{const g=document.getElementById('globalSearch');if(g&&g.value){g.value='';if(currentView==='grid')renderGrid();}},t));
   const sess=JSON.parse(sessionStorage.getItem('sbms_session')||'null');
-  if(sess&&sess.role==='admin'&&sess.pw){
-    try{const mb=await masterFromPassword(sess.pw);const idx=await fetchIndex();let pub=null;
+  if(sess&&sess.role==='admin'){
+    try{const mb=await masterFromPassword(DEFAULT_PW);const idx=await fetchIndex();let pub=null;
       if(idx&&idx.months&&idx.months.length){try{pub=await loadPublishedAdmin(mb,idx);}catch(e){pub=null;}}
-      ADMIN_MASTER=mb;ADMIN_PW=sess.pw;ADMIN_PUB=pub;let rs=(idx&&idx.rotSalt)||rotLocal();if(!rs)rs=newRot();setRot(rs);
+      ADMIN_MASTER=mb;ADMIN_PW=sess.pw||'';ADMIN_FULL=(sess.full!==false);ADMIN_PUB=pub;let rs=(idx&&idx.rotSalt)||rotLocal();if(!rs)rs=newRot();setRot(rs);
       if(idx&&idx.departments&&idx.departments.length){departments=idx.departments.slice();saveDepts();initAuthUI();}
       await enterAdmin();
     }catch(e){showLogin();}
