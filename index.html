@@ -744,11 +744,19 @@ function money(n){if(n==null||isNaN(n))return '—';return CUR()+Number(n).toLoc
 function monthName(m){return['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][m]||'';}
 function renderViews(){
   document.getElementById('navCount').textContent=DATA.length.toLocaleString();
-  renderDashboard();renderFilters();renderGrid();renderPreviewList();renderPhones();renderReportDeptOptions();
-  if(currentView==='reports')renderReport();if(currentView==='analytics')renderAnalytics();if(currentView==='charts')renderCharts();updateBackupInfo();}
+  renderFilters();renderReportDeptOptions();updateBackupInfo();
+  renderCurrentView();   // render ONLY the active screen — others render lazily on navigation (keeps peak memory low)
+}
+function renderCurrentView(){const v=currentView;
+  if(v==='dashboard')renderDashboard();
+  else if(v==='grid')renderGrid();
+  else if(v==='preview')renderPreviewList();
+  else if(v==='phones')renderPhones();
+  else if(v==='reports'){renderReportDeptOptions();renderReport();}
+  else if(v==='analytics')renderAnalytics();
+  else if(v==='charts')renderCharts();}
 async function refreshAll(){DATA=await dbGetAll();applyUsers(DATA);renderViews();}
-function reapplyUsersEverywhere(){applyUsers(DATA);renderGrid();renderPhones();renderPreviewList();renderDashboard();
-  if(currentView==='reports')renderReport();if(currentView==='analytics')renderAnalytics();if(previewSel)openPreviewById(previewSel,true);}
+function reapplyUsersEverywhere(){applyUsers(DATA);renderCurrentView();}
 
 /* ============================ Dashboard ============================ */
 let charts={};function destroyChart(k){if(charts[k]){charts[k].destroy();delete charts[k];}}
@@ -1100,8 +1108,8 @@ let currentView='dashboard';
 function setView(v){currentView=v;document.querySelectorAll('.view').forEach(s=>s.classList.remove('active'));document.getElementById('v-'+v).classList.add('active');
   document.querySelectorAll('#nav a').forEach(a=>a.classList.toggle('active',a.dataset.view===v));
   document.getElementById('viewTitle').textContent=VIEW_META[v][0];document.getElementById('viewSub').textContent=VIEW_META[v][1];
-  if(v==='reports'){renderReportDeptOptions();renderReport();}if(v==='analytics')renderAnalytics();if(v==='charts')renderCharts();
-  if(v==='settings'){renderDeptUI();renderUsers();renderAuthUI();}if(v==='backup'){updateBackupInfo();renderPubMonths();ghFillForm();}if(v==='phones')renderPhones();}
+  renderCurrentView();  // render the screen being opened (lazy)
+  if(v==='settings'){renderDeptUI();renderUsers();renderAuthUI();}if(v==='backup'){updateBackupInfo();renderPubMonths();ghFillForm();}}
 document.querySelectorAll('#nav a').forEach(a=>a.onclick=()=>setView(a.dataset.view));
 
 /* ============================ Folder pickers ============================ */
@@ -1186,12 +1194,15 @@ function setLoad(i,n,msg){const b=document.getElementById('loadBar');if(b&&n)b.s
 function hideLoad(){const o=document.getElementById('loadOverlay');if(o)o.classList.remove('show');}
 // Verify a department code by decrypting a single slice (keeps cache-fast logins secure)
 async function authDept(idx,dept,pass){try{const dkek=await deptKEKFor(pass,dept,idx.rotSalt||'');for(const mo of (idx.months||[])){const f=await fetch('./data/'+mo+'.json',{cache:'no-store'}).then(r=>r.ok?r.json():null).catch(()=>null);const e=f&&f.depts&&f.depts[dept];if(e&&e.keys&&e.keys[dept]){await unwrapWith(dkek,e.keys[dept]);return true;}}return true;}catch(err){return false;}}
-async function loadPublishedAdmin(mb,idx,onp){const masterKey=await masterKeyFor(mb);let out=[];const ms=idx.months||[];
-  for(let i=0;i<ms.length;i++){const mo=ms[i];if(onp)onp(i+1,ms.length);
-    const f=await fetch('./data/'+mo+'.json',{cache:'no-store'}).then(r=>r.ok?r.json():null).catch(()=>null);
-    if(f&&f.depts){for(const d in f.depts){const e=f.depts[d];if(!e.keys||!e.keys.__admin__)continue;
-      try{const dk=await unwrapWith(masterKey,e.keys.__admin__);out=out.concat(JSON.parse(await aesDec(dk,e.iv,e.ct)));}catch(err){}}}
-    await new Promise(r=>setTimeout(r,12));  // small yield → clock keeps ticking + progress bar animates smoothly
+async function loadPublishedAdmin(mb,idx,onp){const masterKey=await masterKeyFor(mb);let out=[];const ms=idx.months||[];const B=5;let done=0;
+  for(let s=0;s<ms.length;s+=B){                                   // fetch up to B months at once (faster), decrypt one-by-one (low memory)
+    const files=await Promise.all(ms.slice(s,s+B).map(mo=>fetch('./data/'+mo+'.json',{cache:'no-store'}).then(r=>r.ok?r.json():null).catch(()=>null)));
+    for(let fi=0;fi<files.length;fi++){const f=files[fi];done++;if(onp)onp(done,ms.length);
+      if(f&&f.depts){for(const d in f.depts){const e=f.depts[d];if(!e.keys||!e.keys.__admin__)continue;
+        try{const dk=await unwrapWith(masterKey,e.keys.__admin__);const arr=JSON.parse(await aesDec(dk,e.iv,e.ct));for(let k=0;k<arr.length;k++)out.push(arr[k]);}catch(err){}}}
+      files[fi]=null;                                              // release each month file as soon as it's decrypted
+      await new Promise(r=>setTimeout(r,8));
+    }
   }
   return out;}
 
@@ -1225,7 +1236,7 @@ document.getElementById('loginBtn').onclick=async()=>{
         showLoad('Loading your data…');
         const cached=await cacheGet('admin');
         if(cached && cached.gen===idx.generated){pub=cached.records;}
-        else{try{pub=await loadPublishedAdmin(mb,idx,(i,n)=>setLoad(i,n,'Decrypting month '+i+' of '+n+'…'));if(pub&&pub.length)await cachePut('admin',idx.generated,pub);}catch(e){pub=null;}}
+        else{try{pub=await loadPublishedAdmin(mb,idx,(i,n)=>setLoad(i,n,'Decrypting month '+i+' of '+n+'…'));if(pub&&pub.length)setTimeout(()=>cachePut('admin',idx.generated,pub),2000);}catch(e){pub=null;}}
       }
       ADMIN_PUB=pub;
       await enterAdmin();
@@ -1237,7 +1248,7 @@ document.getElementById('loginBtn').onclick=async()=>{
         if(!await authDept(idx,role,pass)){hideLoad();loginErr('Wrong access code for '+role+'.');btn.textContent='Sign in';return;}
         recs=cached.records;
       } else {
-        try{recs=await loadPublished(role,pass,(i,n)=>setLoad(i,n,'Decrypting month '+i+' of '+n+'…'),idx);if(idx&&recs&&recs.length)await cachePut(role,idx.generated,recs);}
+        try{recs=await loadPublished(role,pass,(i,n)=>setLoad(i,n,'Decrypting month '+i+' of '+n+'…'),idx);if(idx&&recs&&recs.length)setTimeout(()=>cachePut(role,idx.generated,recs),2000);}
         catch(e){hideLoad();loginErr((e.message==='WRONG_CODE')?('Wrong access code for '+role+'.'):('Could not sign in — '+(e.message||e)));btn.textContent='Sign in';return;}
       }
       if(!recs||!recs.length){hideLoad();loginErr('No published data for '+role+' yet (or wrong code).');btn.textContent='Sign in';return;}
@@ -1274,15 +1285,16 @@ async function loadPublished(dept,pass,onp,idxIn){
   const idx=idxIn||await fetchIndex();
   if(!idx||!idx.months)throw new Error('no index');
   const dkek=await deptKEKFor(pass,dept,idx.rotSalt||'');
-  let out=[],sawSlice=false;
-  const ms=idx.months;
-  for(let i=0;i<ms.length;i++){const mo=ms[i];if(onp)onp(i+1,ms.length);
-    const file=await fetch('./data/'+mo+'.json',{cache:'no-store'}).then(r=>r.ok?r.json():null).catch(()=>null);
-    if(file&&file.depts){const entry=file.depts[dept];
-      if(entry&&entry.keys&&entry.keys[dept]){sawSlice=true;
-        let dk;try{dk=await unwrapWith(dkek,entry.keys[dept]);}catch(err){throw new Error('WRONG_CODE');} // AES auth fail = wrong code
-        out=out.concat(JSON.parse(await aesDec(dk,entry.iv,entry.ct)));}}
-    await new Promise(r=>setTimeout(r,12));
+  let out=[],sawSlice=false;const ms=idx.months;const B=5;let done=0;
+  for(let s=0;s<ms.length;s+=B){
+    const files=await Promise.all(ms.slice(s,s+B).map(mo=>fetch('./data/'+mo+'.json',{cache:'no-store'}).then(r=>r.ok?r.json():null).catch(()=>null)));
+    for(let fi=0;fi<files.length;fi++){const file=files[fi];done++;if(onp)onp(done,ms.length);
+      if(file&&file.depts){const entry=file.depts[dept];
+        if(entry&&entry.keys&&entry.keys[dept]){sawSlice=true;
+          let dk;try{dk=await unwrapWith(dkek,entry.keys[dept]);}catch(err){throw new Error('WRONG_CODE');}
+          const arr=JSON.parse(await aesDec(dk,entry.iv,entry.ct));for(let k=0;k<arr.length;k++)out.push(arr[k]);}}
+      files[fi]=null;await new Promise(r=>setTimeout(r,8));
+    }
   }
   out._sawSlice=sawSlice;
   return out;
@@ -1432,7 +1444,7 @@ async function refreshViewsOnly(){renderViews();}
         showLoad('Loading your data…');
         const cached=await cacheGet('admin');
         if(cached&&cached.gen===idx.generated){pub=cached.records;}
-        else{try{pub=await loadPublishedAdmin(mb,idx,(i,n)=>setLoad(i,n,'Decrypting month '+i+' of '+n+'…'));if(pub&&pub.length)await cachePut('admin',idx.generated,pub);}catch(e){pub=null;}}
+        else{try{pub=await loadPublishedAdmin(mb,idx,(i,n)=>setLoad(i,n,'Decrypting month '+i+' of '+n+'…'));if(pub&&pub.length)setTimeout(()=>cachePut('admin',idx.generated,pub),2000);}catch(e){pub=null;}}
       }
       ADMIN_PUB=pub;
       await enterAdmin();
@@ -1441,7 +1453,7 @@ async function refreshViewsOnly(){renderViews();}
   else if(sess&&sess.role&&sess.role!=='admin'&&sess.pass){
     try{const idx=await fetchIndex();showLoad('Loading '+sess.role+' data…');let recs=null;const cached=idx?await cacheGet(sess.role):null;
       if(idx&&cached&&cached.gen===idx.generated&&await authDept(idx,sess.role,sess.pass)){recs=cached.records;}
-      else{recs=await loadPublished(sess.role,sess.pass,(i,n)=>setLoad(i,n,'Decrypting month '+i+' of '+n+'…'),idx);if(idx&&recs&&recs.length)await cachePut(sess.role,idx.generated,recs);}
+      else{recs=await loadPublished(sess.role,sess.pass,(i,n)=>setLoad(i,n,'Decrypting month '+i+' of '+n+'…'),idx);if(idx&&recs&&recs.length)setTimeout(()=>cachePut(sess.role,idx.generated,recs),2000);}
       if(recs&&recs.length){enterViewer(sess.role,recs,sess.pass);}else{hideLoad();showLogin();}
     }catch(e){hideLoad();showLogin();}
   }
