@@ -1263,7 +1263,7 @@ async function enterAdmin(){MODE='admin';document.body.classList.remove('viewer'
   sessionStorage.setItem('sbms_session',JSON.stringify({role:'admin',pw:ADMIN_PW||'',full:ADMIN_FULL}));
   const local=await dbGetAll();
   if(local.length){DATA=local;applyUsers(DATA);}
-  else if(ADMIN_PUB&&ADMIN_PUB.length){DATA=ADMIN_PUB;rebuildUserMapFromRecords(DATA);applyUsers(DATA);}
+  else if(ADMIN_PUB&&ADMIN_PUB.length){DATA=ADMIN_PUB;ensureIds(DATA);rebuildUserMapFromRecords(DATA);applyUsers(DATA);}
   else DATA=[];
   renderViews();await renderAuthUI();renderPubMonths();renderUsers();updateBackupInfo();ghFillForm();
   setView('dashboard');document.getElementById('loginPass').value='';hideLoad();}
@@ -1271,7 +1271,10 @@ function rebuildUserMapFromRecords(recs){let changed=false;recs.forEach(r=>{if(r
 function enterViewer(dept,recs,pass){MODE='viewer';VIEWER_DEPT=dept;document.body.classList.add('viewer');document.getElementById('loginOverlay').classList.remove('show');
   setUserChip(dept,(dept[0]||'U').toUpperCase());
   sessionStorage.setItem('sbms_session',JSON.stringify({role:dept,pass}));
-  DATA=recs;renderViews();setView('dashboard');document.getElementById('loginPass').value='';hideLoad();}
+  DATA=recs;ensureIds(DATA);renderViews();setView('dashboard');document.getElementById('loginPass').value='';hideLoad();}
+// Published/cached records are stripped down and have no id; give each a unique one so row
+// selection (Billing Info, Data Grid, edit) targets a single record instead of matching all.
+function ensureIds(arr){for(let i=0;i<arr.length;i++){const r=arr[i];if(r.id==null||r.id===''){r.id=(r.mobile||'x')+'|'+(r.year||'?')+'-'+String(r.month||'?').padStart(2,'0')+'|'+(r.invoiceNumber||r.invoiceFile||'')+'#'+i;}}}
 document.getElementById('logoutBtn').onclick=async()=>{sessionStorage.removeItem('sbms_session');try{await cacheClearAll();}catch(e){}location.reload();};
 document.getElementById('umSettings').onclick=()=>{setView('settings');document.getElementById('userPop').classList.remove('show');};
 document.getElementById('userChip').onclick=e=>{e.stopPropagation();document.getElementById('userPop').classList.toggle('show');};
