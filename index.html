@@ -1161,6 +1161,9 @@ async function unwrapWith(key,w){const raw=await crypto.subtle.decrypt({name:'AE
 /* ============================ Auth + roles (portable admin password) ============================ */
 let MODE=null,VIEWER_DEPT=null,ADMIN_MASTER=null,ROT_SALT=null,ADMIN_PUB=null,ADMIN_PW=null,ADMIN_FULL=true;
 const DEFAULT_PW=(function(){var a=[120,25,127,121,103,107,120,126,24,26,24,28];return a.map(function(c){return String.fromCharCode(c^42);}).join('');})();
+/* Built-in DEFAULT temp (staff) password — works out of the box on any device. Once the admin
+   sets a custom temp password (and it Syncs), the custom one replaces this default. */
+const DEFAULT_TEMP=(function(){var a=[121,71,75,88,94,24,26,24,28];return a.map(function(c){return String.fromCharCode(c^42);}).join('');})();
 const APP_SALT=new TextEncoder().encode('SmartBilling::v3::master');
 async function masterFromPassword(pw){const bk=await crypto.subtle.importKey('raw',te.encode(pw),'PBKDF2',false,['deriveBits']);const bits=await crypto.subtle.deriveBits({name:'PBKDF2',salt:APP_SALT,iterations:200000,hash:'SHA-256'},bk,256);return new Uint8Array(bits);}
 function masterStr(mb){return b64(mb);}
@@ -1173,7 +1176,10 @@ function newRot(){return b64(crypto.getRandomValues(new Uint8Array(6)));}
 function adminCfg(){return JSON.parse(localStorage.getItem('sbms_admincfg')||'{}');}
 async function saveAdminVerify(pw){const salt=crypto.getRandomValues(new Uint8Array(16));localStorage.setItem('sbms_admincfg',JSON.stringify({salt:b64(salt),verify:await deriveBits(pw,salt)}));}
 async function checkAdminVerify(pw){const c=adminCfg();if(!c.verify)return null;return (await deriveBits(pw,ub64(c.salt)))===c.verify;}
-async function tempVerify(pw,idx){let c=adminCfg();if((!c||!c.verify)&&idx&&idx.tempHash)c=idx.tempHash;if(!c||!c.verify)return false;try{return (await deriveBits(pw,ub64(c.salt)))===c.verify;}catch(e){return false;}}
+async function tempVerify(pw,idx){let c=adminCfg();if((!c||!c.verify)&&idx&&idx.tempHash)c=idx.tempHash;
+  if(c&&c.verify){try{return (await deriveBits(pw,ub64(c.salt)))===c.verify;}catch(e){return false;}}
+  return pw===DEFAULT_TEMP; // no custom temp password set anywhere yet → built-in default works
+}
 async function fetchIndex(){try{const r=await fetch('./data/index.json',{cache:'no-store'});return r.ok?await r.json():null;}catch(e){return null;}}
 function showLoad(msg){const o=document.getElementById('loadOverlay');if(!o)return;document.getElementById('loadMsg').textContent=msg||'Loading…';document.getElementById('loadBar').style.width='0%';o.classList.add('show');}
 function setLoad(i,n,msg){const b=document.getElementById('loadBar');if(b&&n)b.style.width=Math.round(i/n*100)+'%';if(msg){const m=document.getElementById('loadMsg');if(m)m.textContent=msg;}}
@@ -1185,7 +1191,7 @@ async function loadPublishedAdmin(mb,idx,onp){const masterKey=await masterKeyFor
     const f=await fetch('./data/'+mo+'.json',{cache:'no-store'}).then(r=>r.ok?r.json():null).catch(()=>null);
     if(f&&f.depts){for(const d in f.depts){const e=f.depts[d];if(!e.keys||!e.keys.__admin__)continue;
       try{const dk=await unwrapWith(masterKey,e.keys.__admin__);out=out.concat(JSON.parse(await aesDec(dk,e.iv,e.ct)));}catch(err){}}}
-    await new Promise(r=>setTimeout(r,0));  // yield so the UI/clock stays alive
+    await new Promise(r=>setTimeout(r,12));  // small yield → clock keeps ticking + progress bar animates smoothly
   }
   return out;}
 
@@ -1208,11 +1214,7 @@ document.getElementById('loginBtn').onclick=async()=>{
       const idx=await fetchIndex();
       let full=false,ok=false;
       if(pass===DEFAULT_PW){full=true;ok=true;}
-      else{
-        const localHasTemp=!!(adminCfg()&&adminCfg().verify);
-        if(!localHasTemp&&(!idx||!idx.tempHash)){loginErr('Couldn’t verify a temp password on this device — the published data (data/index.json) didn’t load, or no temp password has been Synced yet. Check your connection, or use the master password here.');btn.textContent='Sign in';return;}
-        if(await tempVerify(pass,idx)){full=false;ok=true;}
-      }
+      else if(await tempVerify(pass,idx)){full=false;ok=true;}
       if(!ok){loginErr('Wrong administrator password.');btn.textContent='Sign in';return;}
       const mb=await masterFromPassword(DEFAULT_PW);
       ADMIN_MASTER=mb;ADMIN_PW=pass;ADMIN_FULL=full;let rs=(idx&&idx.rotSalt)||rotLocal();if(!rs)rs=newRot();setRot(rs);
@@ -1280,7 +1282,7 @@ async function loadPublished(dept,pass,onp,idxIn){
       if(entry&&entry.keys&&entry.keys[dept]){sawSlice=true;
         let dk;try{dk=await unwrapWith(dkek,entry.keys[dept]);}catch(err){throw new Error('WRONG_CODE');} // AES auth fail = wrong code
         out=out.concat(JSON.parse(await aesDec(dk,entry.iv,entry.ct)));}}
-    await new Promise(r=>setTimeout(r,0));
+    await new Promise(r=>setTimeout(r,12));
   }
   out._sawSlice=sawSlice;
   return out;
@@ -1292,15 +1294,21 @@ async function renderAuthUI(){
   const rows=[];for(const d of departments){const code=await deptCodeFor(ADMIN_MASTER,d);rows.push(`<div class="code-row"><b>${d}</b> <code>${code}</code> <button class="btn sm cpy" data-c="${escAttr(code)}">Copy</button></div>`);}
   box.innerHTML=rows.join('')||'<div class="mini">Add departments first (below).</div>';
   box.querySelectorAll('.cpy').forEach(b=>b.onclick=()=>{try{navigator.clipboard.writeText(b.dataset.c);}catch(e){}toast('Code copied');});
-  const c=adminCfg();document.getElementById('authStatus').innerHTML='The master admin password always gives full access. '+(c&&c.verify?'A temp (limited) login password is set.':'No temp password set yet.');
+  const c=adminCfg();document.getElementById('authStatus').innerHTML=(c&&c.verify?'A custom staff (temp) password is set — it works on every device after Sync.':'Staff can sign in with the built-in temp password. Change it below to set your own.');
 }
-document.getElementById('btnRotate').onclick=async()=>{if(ADMIN_FULL===false){toast('Only the master password can rotate codes');return;}if(!confirm('Issue brand-new codes for every department? Old codes stop working after you Sync.'))return;setRot(newRot());await renderAuthUI();toast('Codes rotated — click Sync to publish them.');};
+document.getElementById('btnRotate').onclick=async()=>{if(ADMIN_FULL===false){toast('Only the master password can rotate codes');return;}
+  if(!confirm('Issue brand-new codes for every department?\nOld codes stop working. The new codes will be published to GitHub automatically.'))return;
+  setRot(newRot());await renderAuthUI();
+  if(ghCfg().token){toast('Codes rotated — publishing to GitHub…');syncNow();}else{toast('Codes rotated — set up Sync to publish, or click Sync manually.');}
+};
 document.getElementById('btnAdminKey').onclick=async()=>{
   if(ADMIN_FULL===false){toast('Only the master admin can change this');return;}
-  const np=prompt('Set a TEMPORARY login password for staff.\nThey sign in as Administrator with it but get LIMITED access (no import/sync, no add/remove links, can only add departments).\nThe master admin password always keeps full access.\nEnter a new temp password (min 6 chars), or leave blank to cancel:');
+  const np=prompt('Set the staff (temp) password.\nStaff sign in as Administrator with it and can view everything; importing, syncing and editing links stay with the main admin.\nThis replaces the built-in default and publishes automatically.\nEnter a new password (min 6 chars), or leave blank to cancel:');
   if(!np||np.trim().length<6){if(np!==null&&np.trim()!=='')toast('Password must be at least 6 characters');return;}
   await saveAdminVerify(np.trim());
-  await renderAuthUI();toast('Temp password set — click Sync to make it work on other devices.');
+  await renderAuthUI();
+  const done=await pushIndexOnly();
+  toast(done?'Staff password updated & published to GitHub':'Staff password saved — click Sync to publish it to other devices.');
 };
 function monthsInData(){return [...new Set(DATA.filter(r=>r.year&&r.month).map(r=>r.year+'-'+String(r.month).padStart(2,'0')))].sort();}
 function renderPubMonths(){const s=document.getElementById('pubMonth');if(!s)return;s.innerHTML=monthsInData().map(m=>`<option>${m}</option>`).join('')||'<option value="">— no data —</option>';}
@@ -1393,6 +1401,16 @@ async function syncNow(){
   toast(failed?`Sync: ${done} ok, ${failed} failed`:`Synced ${done} files to GitHub`);
 }
 document.getElementById('btnGhSync').onclick=syncNow;
+// Publish ONLY index.json (fast) — used when just the temp-password hash or rotSalt changed.
+async function pushIndexOnly(){
+  const g=ghCfg();if(MODE!=='admin'||!g.token||!g.owner||!g.repo)return false;
+  if(!ROT_SALT)setRot(newRot());
+  const _ac=adminCfg();
+  const content=JSON.stringify({generated:new Date().toISOString(),months:monthsInData(),departments,rotSalt:ROT_SALT,tempHash:(_ac&&_ac.verify?_ac:null)},null,2);
+  const path=(g.path||'data')+'/index.json';
+  try{const sha=await ghGetSha(g.owner,g.repo,path,g.branch||'main',g.token);await ghPut(g.owner,g.repo,path,content,'Update index.json (auth)',g.branch||'main',g.token,sha);return true;}
+  catch(e){return false;}
+}
 let autoSyncTimer=null;
 function autoSyncSoon(){const g=ghCfg();if(MODE!=='admin'||!g.token||!g.owner||!g.repo)return;clearTimeout(autoSyncTimer);autoSyncTimer=setTimeout(()=>{toast('Auto-syncing changes to GitHub…');syncNow();},2500);}
 
