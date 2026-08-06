@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-06T02:43:45.693Z",
+  "generated": "2026-08-06T03:30:23.880Z",
   "months": [
     "2024-06",
     "2024-07",
@@ -34,14 +34,12 @@
     "Finance",
     "Admin",
     "Aftermarket",
-    "Services",
     "IT",
     "CPG",
-    "Technician"
+    "Technician",
+    "Training",
+    "Service"
   ],
   "rotSalt": "nPS5rhXa",
-  "tempHash": {
-    "salt": "Lbf69EjMm6r3bAaL5tot7w==",
-    "verify": "AYS7Q6kHS6cfddhzDD3EBYvMk0hsz/WDbEzLtnKe2l0="
-  }
+  "tempHash": null
 }
